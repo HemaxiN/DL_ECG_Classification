@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import configure_seed, configure_device, plot
+from utils import configure_seed, configure_device, plot, ECGImageDataset
 
 
 class AlexNet(nn.Module):
@@ -121,20 +121,16 @@ def main():
 	configure_seed(seed=42)
 	configure_device(opt.gpu_id)
 
-	##### ADAPTAR PARA O NOSSO DATASET
-	dataset = OCRDataset(opt.data)
-
 	print("Loading data...")
 	feature_function = pairwise_features if not opt.no_pairwise else None
-	train_dataset = OCRDataset(opt.data, 'train', feature_function=feature_function)
-	dev_dataset = OCRDataset(opt.data, 'dev', train_dataset.labels, feature_function=feature_function)
-	test_dataset = OCRDataset(opt.data, 'test', train_dataset.labels, feature_function=feature_function)
-
+	train_dataset = ECGImageDataset(opt.data, 'train', feature_function=feature_function)
+	dev_dataset = ECGImageDataset(opt.data, 'dev', train_dataset.labels, feature_function=feature_function)
+	test_dataset = ECGImageDataset(opt.data, 'test', train_dataset.labels, feature_function=feature_function)
 
 	train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, collate_fn=collate_fn)
 	dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
 	test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-	#####
+
 
 	n_classes = torch.unique(dataset.y).shape[0]  # 5
 

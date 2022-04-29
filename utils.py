@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
 
+import cv2
+import os
 
 def configure_device(gpu_id):
     if gpu_id is not None:
@@ -27,3 +29,37 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+
+
+class ECGImageDataset(Dataset):
+	'''
+	path/train/images
+			  /labels
+		/val/images
+			/labels
+		/test/images
+			 /labels
+	'''
+    def __init__(self, path, part='train', train_labels=None):
+    	self.path = path
+    	self.part = part
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+    	X, y = read_data(self.path, self.part, idx)
+        return torch.tensor(X).float(), torch.tensor(self.y).long()
+
+
+def read_data(path, partition, idx):
+	'''Read the ECG Image Data'''
+	final_path = os.path.join(path, partition)
+	X = []
+	y = []
+	for index in idx:
+		image = cv2.imread(os.path.join(final_path, 'images/'+str(index)+'.jpg'))
+		X.append(image)
+		label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
+		y.append(label)
+	return X, y
