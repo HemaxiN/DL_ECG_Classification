@@ -122,7 +122,6 @@ def main():
 	configure_device(opt.gpu_id)
 
 	print("Loading data...")
-	feature_function = pairwise_features if not opt.no_pairwise else None
 	train_dataset = ECGImageDataset(opt.data, 'train', feature_function=feature_function)
 	dev_dataset = ECGImageDataset(opt.data, 'dev', train_dataset.labels, feature_function=feature_function)
 	test_dataset = ECGImageDataset(opt.data, 'test', train_dataset.labels, feature_function=feature_function)
