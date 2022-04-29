@@ -40,7 +40,7 @@ class ECGImageDataset(Dataset):
 		/test/images
 			 /labels
 	'''
-    def __init__(self, path, part='train', train_labels=None):
+    def __init__(self, path, part='train'):
     	self.path = path
     	self.part = part
 

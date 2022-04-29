@@ -122,11 +122,11 @@ def main():
 	configure_device(opt.gpu_id)
 
 	print("Loading data...")
-	train_dataset = ECGImageDataset(opt.data, 'train', feature_function=feature_function)
-	dev_dataset = ECGImageDataset(opt.data, 'dev', train_dataset.labels, feature_function=feature_function)
-	test_dataset = ECGImageDataset(opt.data, 'test', train_dataset.labels, feature_function=feature_function)
+	train_dataset = ECGImageDataset(opt.data, 'train')
+	dev_dataset = ECGImageDataset(opt.data, 'dev')
+	test_dataset = ECGImageDataset(opt.data, 'test')
 
-	train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, collate_fn=collate_fn)
+	train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
 	dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
 	test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
