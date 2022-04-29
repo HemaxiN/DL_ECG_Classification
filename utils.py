@@ -59,6 +59,7 @@ def read_data(path, partition, idx):
 	y = []
 	for index in idx:
 		image = cv2.imread(os.path.join(final_path, 'images/'+str(index)+'.jpg'))
+		image = image.transpose(2,0,1) #channels, x, y
 		X.append(image)
 		label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
 		y.append(label)
