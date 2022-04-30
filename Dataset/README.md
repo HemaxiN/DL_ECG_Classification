@@ -23,21 +23,13 @@ Multi-label problem:
 
 ```
 Norm: [0,0,0,0]
-
 MI: [1,0,0,0]
-
 STTC: [0,1,0,0]
-
 CD: [0,0,1,0]
-
 HYP: [0,0,0,1]
-
-Combination example:
-
+Label combination example:
 HYP and MI: [1,0,0,1]
-
 HYP and CD and STTC: [0,1,1,1]
-
 ```
 
 # How to load the data 
