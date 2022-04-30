@@ -21,7 +21,7 @@ label_encoding (shown in function labelstovector in [this notebook](https://gith
 
 Multi-label problem:
 
-`
+```
 Norm: [0,0,0,0]
 
 MI: [1,0,0,0]
@@ -38,7 +38,7 @@ HYP and MI: [1,0,0,1]
 
 HYP and CD and STTC: [0,1,1,1]
 
-`
+```
 
 # How to load the data 
 
