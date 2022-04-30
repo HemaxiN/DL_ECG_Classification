@@ -5,5 +5,5 @@
 #select 3 leads (I, II, V2)
 #convert to images (9,1000,1000) for each example
 
-#save the images as tiff files  (0.tif to number_of_examples.tif)
+#save the images as tiff files  (0.tif to number_of_examples.tif) 
 #save the labels as numpy arrays (0.tif to number_of_examples.tif)
