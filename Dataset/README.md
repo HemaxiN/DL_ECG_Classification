@@ -30,6 +30,7 @@ HYP and CD and STTC: [0,1,1,1]
 
 # How to load the data 
 
+```
 pickle_in = open("name.pickle","rb") 
-
 name = pickle.load(pickle_in)
+```
