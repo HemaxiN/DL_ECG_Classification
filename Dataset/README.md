@@ -1,15 +1,32 @@
 PTB-XL, a large publicly available electrocardiography dataset (available at https://physionet.org/content/ptb-xl/1.0.1/) 
  
-The training examples and corresponding labels are obtained running the "dataset.ipynb" notebook (https://drive.google.com/drive/folders/1h-LlDgo7bQ_Xg-wrO7_3XG3uAjWAAyl9?usp=sharing)
+The training examples and corresponding labels are obtained running the "dataset.ipynb" notebook (https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV?usp=sharing)
  
-X_train.pickle (19634, 1000, 12) 
+X_train_processed.pickle (17111, 1000, 12)
 
-y_train.pickle (19634,) 
- 
-X_test.pickle (2203, 1000, 12) 
+y_train_processed.pickle (17111, 4)
 
-y_test.pickle (2203,) 
+X_dev_processed.pickle (2156, 1000, 12)
+
+y_dev_processed.pickle (2156, 4)
  
+X_test_processed.pickle (2163, 1000, 12)
+
+y_test_processed.pickle (2163, 4)
+ 
+
+label_encoding (shown in function labelstovector in dataset.ipynb)
+
+Multi-label problem:
+Norm: [0,0,0,0]
+MI: [1,0,0,0]
+STTC: [0,1,0,0]
+CD: [0,0,1,0]
+HYP: [0,0,0,1]
+Combination example:
+HYP and MI: [1,0,0,1]
+HYP and CD and STTC: [0,1,1,1]
+
 How to load the data 
 
 pickle_in = open("name.pickle","rb") 

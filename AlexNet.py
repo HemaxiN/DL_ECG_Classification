@@ -6,6 +6,12 @@ from torch.utils.data import DataLoader
 
 from utils import configure_seed, configure_device, plot, ECGImageDataset
 
+#auxiliary functions to evaluate the performance of the model
+from sklearn.metrics import recall_score
+import statistics
+import numpy as np
+
+import os
 
 class AlexNet(nn.Module):
     def __init__(self, n_classes, **kwargs):
@@ -17,13 +23,13 @@ class AlexNet(nn.Module):
         """
         super(AlexNet, self).__init__()
         self.n_classes = n_classes
-        self.conv2d_1 = nn.Conv2d(3,96,11,stride=4)
+        self.conv2d_1 = nn.Conv2d(9,96,11,stride=4) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
         self.conv2d_2 = nn.Conv2d(96, 256, 5, padding=2)
         self.conv2d_3 = nn.Conv2d(256, 384, 3, padding=1)
         self.conv2d_4 = nn.Conv2d(384, 384, 3, padding=1)
         self.conv2d_5 = nn.Conv2d(384, 256, 3, padding=1)
-        self.linear_1 = nn.Linear(9216, 4096)
+        self.linear_1 = nn.Linear(230400, 4096)
         self.linear_2 = nn.Linear(4096, 4096)
         self.linear_3 = nn.Linear(4096, n_classes)
         #nn.MaxPool2d(kernel_size)
@@ -35,17 +41,17 @@ class AlexNet(nn.Module):
         Forward Propagation
 
         Args:
-            X: batch of training examples with dimension (batch_size, 3, 227, 227)
+            X: batch of training examples with dimension (batch_size, 9, 1000, 1000) 
         """
         x1 = self.relu(self.conv2d_1(X))
-        maxpool1 =  self.MaxPool2d(x1)
+        maxpool1 =  self.maxpool2d(x1)
         x2 = self.relu(self.conv2d_2(maxpool1))
-        maxpool2 = self.MaxPool2d(x2)
+        maxpool2 = self.maxpool2d(x2)
         x3 = self.relu(self.conv2d_3(maxpool2))
         x4 = self.relu(self.conv2d_4(x3))
         x5 = self.relu(self.conv2d_5(x4))
         x6 = self.maxpool2d(x5)
-        x6 = x6.reshape(x.shape[0],-1) #flatten (batch_size,)
+        x6 = x6.reshape(x6.shape[0],-1) #flatten (batch_size,)
         x7 = self.relu(self.linear_1(x6))
         x8 = self.relu(self.linear_2(x7))
         x9 = self.linear_3(x8)
@@ -53,8 +59,8 @@ class AlexNet(nn.Module):
 
 def train_batch(X, y, model, optimizer, criterion, gpu_id=None, **kwargs):
     """
-    X (batch_size, 3, 227, 227): batch of examples
-    y (batch_size): ground truth labels
+    X (batch_size, 9, 1000, 1000): batch of examples
+    y (batch_size, 4): ground truth labels
     model: Pytorch model
     optimizer: optimizer for the gradient step
     criterion: loss function
@@ -69,35 +75,36 @@ def train_batch(X, y, model, optimizer, criterion, gpu_id=None, **kwargs):
 
 def predict(model, X):
     """
-    Make label predictions for "X" (batch_size, 3, 227, 227) 
+    Make label predictions for "X" (batch_size, 9, 1000, 1000) 
     given the trained model "model"
     """
     probabilities = model(X) # (batch_size, n_classes)
-    pred_labels = scores.argmax(dim=-1) # (batch_size)
+    pred_labels = np.array(probabilities>0.5, dtype=float) # (batch_size, n_classes)
     return pred_labels
 
 def evaluate(model,dataloader, gpu_id=None):
     """
     model: Pytorch model
-    X (batch_size, 3, 227, 227): batch of examples
-    y (batch_size): ground truth labels
+    X (batch_size, 9, 1000, 1000) : batch of examples
+    y (batch_size,4): ground truth labels
     """
-
     model.eval()
     with torch.no_grad():
-        y_pred_all = []
-        y_true_all = []
+        recall_list = []
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            y_true_all.append(y_batch)
             print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
-            y_pred = model(x_batch)
-            y_pred_all.append(y_pred)
+            y_pred = predict(model, x_batch)
+            #print('true')
+            y_batch = np.array(y_batch)
+            #print(y_batch)
+            #print('pred')
+            #print(y_pred)
+            recall_ = recall_score(y_true=y_batch, y_pred=y_pred, average='micro')
+            recall_list.append(recall_)
 
-        n_correct = (y==ypred).sum().item()
-        n_possible = float(y.shape[0])
         model.train()
-    return n_correct/n_possible
+    return statistics.mean(recall_list)
 
 
 
@@ -116,6 +123,8 @@ def main():
     parser.add_argument('-optimizer',
                         choices=['sgd', 'adam'], default='sgd')
     parser.add_argument('-gpu_id', type=int, default=None)
+    parser.add_argument('-path_save_model', default=None,
+    					help='Path to save the model')
     opt = parser.parse_args()
 
     configure_seed(seed=42)
@@ -131,11 +140,11 @@ def main():
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 
-    n_classes = torch.unique(dataset.y).shape[0]  # 5
+    n_classes = 4  # 4 diseases + normal
 
     # initialize the model
     model = AlexNet(n_classes)
-    model = model.to(gpu_id)
+    model = model.to(opt.gpu_id)
 
     # get an optimizer
     optims = {
@@ -149,7 +158,8 @@ def main():
         weight_decay=opt.l2_decay)
 
     # get a loss criterion
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss() #https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
+    # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
 
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
@@ -169,13 +179,15 @@ def main():
 
         train_mean_losses.append(mean_loss)
         valid_accs.append(evaluate(model, dev_dataloader, gpu_id=opt.gpu_id))
-        print('Valid acc: %.4f' % (valid_accs[-1]))
+        print('Valid recall: %.4f' % (valid_accs[-1]))
 
     print('Final Test acc: %.4f' % (evaluate(model, test_dataloader, gpu_id=opt.gpu_id)))
     # plot
-    plot(epochs, train_mean_losses, ylabel='Loss', name='{}-training-loss-{}-{}-{}-{}-{}'.format(opt.model, opt.learning_rate, opt.hidden_sizes[0], opt.dropout, opt.activation, opt.optimizer))
-    plot(epochs, valid_accs, ylabel='Accuracy', name='{}-validation-accuracy-{}-{}-{}-{}-{}'.format(opt.model, opt.learning_rate, opt.hidden_sizes[0], opt.dropout, opt.activation, opt.optimizer))
+    plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+    plot(epochs, valid_accs, ylabel='Recall', name='validation-recall-{}-{}'.format(opt.learning_rate, opt.optimizer))
 
+    #https://pytorch.org/tutorials/beginner/saving_loading_models.html
+    torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'))
 
 if __name__ == '__main__':
     main()

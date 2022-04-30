@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 
 import cv2
 import os
+import tifffile
 
 def configure_device(gpu_id):
     if gpu_id is not None:
@@ -55,14 +56,15 @@ class ECGImageDataset(Dataset):
 
     def __getitem__(self, idx):
         X, y = read_data(self.path, self.part, idx)
-        return torch.tensor(X).float(), torch.tensor(y).long()
+        return torch.tensor(X).float(), torch.tensor(y).float()
 
 
 def read_data(path, partition, idx):
     '''Read the ECG Image Data'''
     final_path = os.path.join(path, partition)
     index = idx
-    image = cv2.imread(os.path.join(final_path, 'images/'+str(index)+'.jpg'))
-    image = image.transpose(2,0,1) #channels, x, y
+    image = tifffile.imread(os.path.join(final_path, 'images/'+str(index)+'.tif'))
+    image = image/255.0 #normalization
+    #image = image.transpose(2,0,1) #channels, x, y
     label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
