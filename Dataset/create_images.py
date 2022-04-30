@@ -9,7 +9,7 @@
 #save the images as tiff files  (0.tif to number_of_examples.tif) 
 #save the labels as numpy arrays (0.tif to number_of_examples.tif)
 
-import tifffile as tf
+import tifffile 
 import numpy as np
 import pickle
 import os
@@ -19,10 +19,10 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 partition = 'train'
 
-pickle_in = open("/content/drive/My Drive/DSL/DS/Processed", "X_" + partition + " _processed.pickle","rb") 
+pickle_in = open(os.path.join("/content/drive/My Drive/DSL/DS/Processed", "X_" + partition + "_processed.pickle"),"rb") 
 X_train_processed = pickle.load(pickle_in)
 
-pickle_in = open("/content/drive/My Drive/DSL/DS/Processed", "y_" + partition + " _processed.pickle","rb") 
+pickle_in = open(os.path.join("/content/drive/My Drive/DSL/DS/Processed", "y_" + partition + "_processed.pickle"),"rb") 
 y_train_processed = pickle.load(pickle_in)
 
 save_dir = os.path.join('/content/drive/My Drive/DSL/DS/Images', partition)
@@ -34,7 +34,7 @@ def ecgtoimage(X,y,save_dir):
 		y_i = y[i] #(4)
 		np.save(os.path.join(save_dir, 'labels/' + str(i) + '.npy' ), y_i)
 
-		X_aux = np.zeros(9,1000,1000)
+		X_aux = np.zeros((9,1000,1000))
 
 		X_i = X[i] #(1000,12)
 		lead_I = X_i[:,0]
@@ -61,7 +61,8 @@ def ecgtoimage(X,y,save_dir):
 		X_aux[3:6] = lead_II_transf
 		X_aux[6:9] = lead_V2_transf
 
-		#X_aux = X_aux.astype('uint8')
+		X_aux = X_aux*255.0
+		X_aux = X_aux.astype('uint8')
 		tifffile.imwrite(os.path.join(save_dir, 'images/' + str(i) + '.tif' ), X_aux)
 
 
@@ -71,7 +72,7 @@ def ecgnorm(ecg):
 	return ecg_norm
 
 def ecgtoimagetransf(ecg):
-	aux_img = np.zeros(3,len(ecg), len(ecg))
+	aux_img = np.zeros((3,len(ecg), len(ecg)))
 
 	# Gramian Angular Field
 	gaf = GramianAngularField(image_size=len(ecg), method='summation')
@@ -79,6 +80,10 @@ def ecgtoimagetransf(ecg):
 	x_gaf = gaf.fit_transform(ecg.reshape(1,-1))
 	mtf = get_mtf(ecg)
 	rp = recurrence_plot(ecg, steps=10)
+
+	x_gaf = (x_gaf+1)/2
+	mtf = mtf+1
+	rp = (rp+1)/2
 
 	aux_img[0] = x_gaf
 	aux_img[1] = mtf

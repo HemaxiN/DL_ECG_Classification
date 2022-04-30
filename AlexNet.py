@@ -137,9 +137,9 @@ def main():
     configure_device(opt.gpu_id)
 
     print("Loading data...") ## input manual nexamples train, dev e test
-    train_dataset = ECGImageDataset(opt.data, [2,2,2], 'train')
-    dev_dataset = ECGImageDataset(opt.data, [2,2,2], 'dev')
-    test_dataset = ECGImageDataset(opt.data, [2,2,2], 'test')
+    train_dataset = ECGImageDataset(opt.data, [17111,2156,2263], 'train')
+    dev_dataset = ECGImageDataset(opt.data, [17111,2156,2263], 'dev')
+    test_dataset = ECGImageDataset(opt.data, [17111,2156,2263], 'test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
