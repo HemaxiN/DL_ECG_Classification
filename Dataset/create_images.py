@@ -7,3 +7,25 @@
 
 #save the images as tiff files  (0.tif to number_of_examples.tif) 
 #save the labels as numpy arrays (0.tif to number_of_examples.tif)
+
+
+
+import cv2
+import tifffile as tf
+import numpy as np
+
+a = np.random.randint(1,255,(9,1000,1000))
+
+a = a.astype('uint8')
+
+tf.imwrite(r'C:\Users\hemax\Desktop\0.tif', a)
+
+ import numpy as np
+
+a = np.zeros(4)
+
+a[1] =1
+
+a[3] = 1
+
+np.save(r'C:\Users\hemax\Desktop\0.npy', a)
