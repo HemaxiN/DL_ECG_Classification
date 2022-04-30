@@ -10,4 +10,4 @@ Details regarding the dataset are described [here](https://github.com/HemaxiN/DL
 
 # Running the AlexNet Model for ECG classification
 
-python3 AlexNet.py -data '/mnt/2TBData/hemaxi/DL/projeto/ds' -epochs 100 -batch_size 2 -path_save_model '/mnt/2TBData/hemaxi/DL/projeto' -gpu_id 0
+```python3 AlexNet.py -data '/mnt/2TBData/hemaxi/DL/projeto/ds' -epochs 100 -batch_size 2 -path_save_model '/mnt/2TBData/hemaxi/DL/projeto' -gpu_id 0```
