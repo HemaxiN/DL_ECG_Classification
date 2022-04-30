@@ -68,3 +68,32 @@ def read_data(path, partition, idx):
     #image = image.transpose(2,0,1) #channels, x, y
     label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
+
+
+#performance evaluation
+def compute_scores(y_true, y_pred, matrix):
+    for j in range(len(y_true)):
+        pred = y_pred[j]
+        gt = y_true[j]
+        for i in range(0,4): #for each class
+            matrix = computetpfnfp(pred[i], gt[i], i, matrix)
+    return matrix
+
+
+def compute_scores_dev(matrix):
+    matrix[matrix==0] = 0.01
+    #print(matrix)
+    sensitivity = matrix[:,0] / (matrix[:,0] + matrix[:,1]) #tp/(tp+fn)
+    specificity = matrix[:,3] / (matrix[:,3] + matrix[:,2]) #tn/(tn+fp)
+    return np.mean(sensitivity), np.mean(specificity)
+
+def computetpfnfp(pred, gt, i, matrix):
+    if pred==0 and pred==0: #tn
+        matrix[i,3] +=1
+    if gt==1 and pred==0: #fn
+        matrix[i,1] +=1
+    if gt==0 and pred==1: #fp
+        matrix[i,2] +=1
+    if gt==1 and pred==1: #tp
+        matrix[i,0] +=1
+    return matrix
