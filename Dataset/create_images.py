@@ -29,3 +29,16 @@ a[1] =1
 a[3] = 1
 
 np.save(r'C:\Users\hemax\Desktop\0.npy', a)
+
+
+#band pass filter
+from scipy.signal import butter, sosfilt
+
+band_pass_filter = butter(2, [0.05, 40], 'bandpass', fs=100, output='sos' )
+
+filtered_signal = sosfilt(band_pass_filter, signal)
+
+
+normalize 
+
+x_example_lead1 = (x_example_lead1 -min(x_example_lead1)) / max(x_example_lead1-min(x_example_lead1))
