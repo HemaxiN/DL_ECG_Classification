@@ -1,4 +1,4 @@
-# PTB-XL, a large publicly available electrocardiography dataset (available at https://physionet.org/content/ptb-xl/1.0.1/) 
+# PTB-XL, a large publicly available electrocardiography dataset (available at [Physionet](https://physionet.org/content/ptb-xl/1.0.1/))
  
 The training examples and corresponding labels are obtained running the [dataset.ipynb](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/dataset.ipynb). 
  
