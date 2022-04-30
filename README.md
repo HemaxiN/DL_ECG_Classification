@@ -5,7 +5,7 @@ Practical project to explore a multimodal deep learning approach for ECG classif
 
 # Dataset
 
-Details regarding the dataset are described [here](https://github.com/HemaxiN/DL_ECG_Classification/tree/main/Dataset).
+Details regarding the dataset are presented [here](https://github.com/HemaxiN/DL_ECG_Classification/tree/main/Dataset).
 
 
 # Running the AlexNet Model for ECG classification
