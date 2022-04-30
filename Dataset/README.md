@@ -2,18 +2,14 @@
  
 The training examples and corresponding labels are obtained running the [dataset.ipynb](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/dataset.ipynb) (https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV?usp=sharing)
  
+```
 X_train_processed.pickle (17111, 1000, 12)
-
 y_train_processed.pickle (17111, 4)
-
 X_dev_processed.pickle (2156, 1000, 12)
-
 y_dev_processed.pickle (2156, 4)
- 
 X_test_processed.pickle (2163, 1000, 12)
-
 y_test_processed.pickle (2163, 4)
- 
+```
  
 # Encoding 
 
