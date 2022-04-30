@@ -64,7 +64,7 @@ def read_data(path, partition, idx):
     final_path = os.path.join(path, partition)
     index = idx
     image = tifffile.imread(os.path.join(final_path, 'images/'+str(index)+'.tif'))
-    image = image/255.0 #normalization
+    #image = image/255.0 #normalization
     #image = image.transpose(2,0,1) #channels, x, y
     label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
