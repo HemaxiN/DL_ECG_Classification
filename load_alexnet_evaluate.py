@@ -12,7 +12,7 @@ model.load_state_dict(torch.load('/mnt/2TBData/hemaxi/DL/projeto/model'))
 model.eval()
 
 
-test_dataset = ECGImageDataset('/mnt/2TBData/hemaxi/DL/projeto/ds', [2,2,2], 'test')
+test_dataset = ECGImageDataset('/mnt/2TBData/hemaxi/DL/projeto/ds', [17111,2156,2163], 'test')
 
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
