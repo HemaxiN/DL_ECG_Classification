@@ -29,7 +29,7 @@ save_dir = os.path.join('/content/drive/My Drive/DSL/DS/Images', partition)
 
 def ecgtoimage(X,y,save_dir):
 	#band pass filter
-	band_pass_filter = butter(2, [0.05, 40], 'bandpass', fs=100, output='sos')
+	band_pass_filter = butter(2, [1, 45], 'bandpass', fs=100, output='sos')
 	for i in range(np.shape(X)[0]):
 		y_i = y[i] #(4)
 		np.save(os.path.join(save_dir, 'labels/' + str(i) + '.npy' ), y_i)
