@@ -13,7 +13,7 @@ Examples of the ECG signal obtained with leads I, II and V2 for the 17110 ECG re
 
 Examples of GAF (left), MTF (middle) and RP (right) images for the 17110 ECG record (with ground truth label NORM), corresponding to leads I, II and V2:
 
-![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/examples_GAF_MTF_RP.png)
+![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/examples_GAF_MTF_RP1.png)
 
 # Running the AlexNet Model for ECG classification
 
