@@ -7,7 +7,11 @@ Practical project to explore a multimodal deep learning approach for ECG classif
 
 Details regarding the dataset are presented [here](https://github.com/HemaxiN/DL_ECG_Classification/tree/main/Dataset).
 
-Examples of GAF (left), MTF (middle) and RP (right) images corresponding to a record with ground truth label NORM, for leads I, II and V2:
+Examples of the ECG signal obtained with leads I, II and V2 for the 17110 ECG record (with ground truth label NORM).
+
+![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/ecg_record_17110.PNG)
+
+Examples of GAF (left), MTF (middle) and RP (right) images for the 17110 ECG record (with ground truth label NORM), corresponding to leads I, II and V2:
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/examples_GAF_MTF_RP.png)
 
