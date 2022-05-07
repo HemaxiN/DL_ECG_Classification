@@ -133,10 +133,12 @@ def main():
     configure_seed(seed=42)
     configure_device(opt.gpu_id)
 
+    _examples_ = [17111,2156,2163]
+
     print("Loading data...") ## input manual nexamples train, dev e test
-    train_dataset = ECGImageDataset(opt.data, [17111,2156,2163], 'train')
-    dev_dataset = ECGImageDataset(opt.data, [17111,2156,2163], 'dev')
-    test_dataset = ECGImageDataset(opt.data, [17111,2156,2163], 'test')
+    train_dataset = ECGImageDataset(opt.data, _examples_, 'train')
+    dev_dataset = ECGImageDataset(opt.data, _examples_, 'dev')
+    test_dataset = ECGImageDataset(opt.data, _examples_, 'test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
