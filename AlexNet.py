@@ -80,7 +80,7 @@ def train_batch(X, y, model, optimizer, criterion, gpu_id=None, **kwargs):
 
 def predict(model, X):
     """
-    Make label predictions for "X" (batch_size, 9, 1000, 1000) 
+    Make label predictions for "X" (batch_size, 9, 256,256) 
     given the trained model "model"
     """
     logits_ = model(X) # (batch_size, n_classes
@@ -196,7 +196,7 @@ def main():
     class_weights = class_weights.to(opt.gpu_id)
     criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights) #https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
-    print('HEREEEEEEEEEEEEEEEEEEE')
+
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
     train_mean_losses = []
