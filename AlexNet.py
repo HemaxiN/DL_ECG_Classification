@@ -21,13 +21,14 @@ class AlexNet(nn.Module):
             n_classes (int): Number of classes in our classification problem
         """
         super(AlexNet, self).__init__()
+        nb_filters = 8
         self.n_classes = n_classes
-        self.conv2d_1 = nn.Conv2d(9,8,11,stride=4) #9 input channels
+        self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
-        self.conv2d_2 = nn.Conv2d(8, 16, 5, padding=2)
-        self.conv2d_3 = nn.Conv2d(16, 32, 3, padding=1)
-        self.conv2d_4 = nn.Conv2d(32, 64, 3, padding=1)
-        self.conv2d_5 = nn.Conv2d(64, 256, 3, padding=1)
+        self.conv2d_2 = nn.Conv2d(nb_filters, nb_filters*2, 5, padding=2)
+        self.conv2d_3 = nn.Conv2d(nb_filters*2, nb_filters*4, 3, padding=1)
+        self.conv2d_4 = nn.Conv2d(nb_filters*4, nb_filters*8, 3, padding=1)
+        self.conv2d_5 = nn.Conv2d(nb_filters*8, 256, 3, padding=1)
         self.linear_1 = nn.Linear(9216, 4096)
         self.linear_2 = nn.Linear(4096, 2048)
         self.linear_3 = nn.Linear(2048, n_classes)
