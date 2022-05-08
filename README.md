@@ -17,7 +17,7 @@ Examples of GAF (left), MTF (middle) and RP (right) images for the 17110 ECG rec
 
 # Running the AlexNet Model for ECG classification
 
-```python3 AlexNet.py -data '/mnt/2TBData/hemaxi/DL/projeto/ds' -epochs 100 -batch_size 2 -path_save_model '/mnt/2TBData/hemaxi/DL/projeto' -gpu_id 0```
+```python3 alexnet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 32 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  ```
 
 
 # Acknowledgements

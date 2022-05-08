@@ -31,6 +31,16 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.plot(epochs, plottable)
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
 
+def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
+    plt.clf()
+    plt.xlabel('Epoch')
+    plt.ylabel(ylabel)
+    #plt.xticks(epochs)
+    plt.plot(epochs, valid_losses, label='validation')
+    plt.plot(epochs, train_losses, label='train')
+    plt.legend()
+    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+
 
 class ECGImageDataset(Dataset):
     '''
