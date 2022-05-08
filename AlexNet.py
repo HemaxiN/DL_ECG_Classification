@@ -1,3 +1,5 @@
+#code based on the source code of homework 1 and homework 2 of the 
+#deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 import argparse
 
 import torch
@@ -21,7 +23,7 @@ class AlexNet(nn.Module):
             n_classes (int): Number of classes in our classification problem
         """
         super(AlexNet, self).__init__()
-        nb_filters = 8
+        nb_filters = 8 #number of filters in the first layer
         self.n_classes = n_classes
         self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
@@ -62,7 +64,7 @@ class AlexNet(nn.Module):
 
 def train_batch(X, y, model, optimizer, criterion, gpu_id=None, **kwargs):
     """
-    X (batch_size, 9, 1000, 1000): batch of examples
+    X (batch_size, 9, 256, 256): batch of examples
     y (batch_size, 4): ground truth labels
     model: Pytorch model
     optimizer: optimizer for the gradient step
@@ -118,6 +120,7 @@ def evaluate(model,dataloader, part, gpu_id=None):
         return matrix
 
 def compute_loss(model, dataloader, criterion, gpu_id=None):
+	#compute the validation loss at the end of each epoch
     model.eval()
     with torch.no_grad():
         val_losses = []

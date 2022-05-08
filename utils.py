@@ -1,3 +1,5 @@
+#code based on the source code of homework 1 and homework 2 of the 
+#deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 import random
 
 import numpy as np
@@ -41,7 +43,8 @@ def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.legend()
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
 
-
+#create a generator to read the images as we train the model
+#(similar to flow_from_directory Keras)
 class ECGImageDataset(Dataset):
     '''
     path/train/images
@@ -80,7 +83,8 @@ def read_data(path, partition, idx):
     return image, label
 
 
-#performance evaluation
+#performance evaluation, compute the tp, fn, fp, and tp for each disease class
+#and compute the specificity and sensitivity
 def compute_scores(y_true, y_pred, matrix):
     for j in range(len(y_true)):
         pred = y_pred[j]
