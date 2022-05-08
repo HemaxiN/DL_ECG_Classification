@@ -23,7 +23,9 @@ To obtain the images shown above run the file [create_images.py](https://github.
 
 To train the model use the following command:
 
-```python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  ```
+```
+python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  
+```
 
 Pre-trained models are available [here](https://drive.google.com/drive/folders/1IqFgX6fq-zqcwgKKmj5Bb6f_zAeSfdQq?usp=sharing). (8_filters and 16_filters denote the models trained with nb_filters=8 and nb_filters=16, respectively).
 
