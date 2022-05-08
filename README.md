@@ -11,14 +11,21 @@ Examples of the ECG signal obtained with leads I, II and V2 for the 17110 ECG re
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/ecg_record_17110.PNG)
 
+
+
+# Image Sub-Net: AlexNet Model for ECG classification
+
 Examples of GAF (left), MTF (middle) and RP (right) images for the 17110 ECG record (with ground truth label NORM), corresponding to leads I, II and V2:
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/examples_GAF_MTF_RP1.png)
 
-# Running the AlexNet Model for ECG classification
+To obtain the images shown above run the file [create_images.py](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/create_images.py), specifying the partition ('train', 'dev' or 'test') and the directory with the processed files available [here](https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV).
 
-```python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 32 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  ```
+To train the model use the following command:
 
+```python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  ```
+
+Pre-trained models are available [here](https://drive.google.com/drive/folders/1IqFgX6fq-zqcwgKKmj5Bb6f_zAeSfdQq?usp=sharing). (8_filters and 16_filters denote the models trained with nb_filters=8 and nb_filters=16, respectively).
 
 # Acknowledgements
 
