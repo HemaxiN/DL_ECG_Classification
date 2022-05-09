@@ -44,6 +44,17 @@ python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_sav
 
 The models that we trained are available [here](https://drive.google.com/drive/folders/1IqFgX6fq-zqcwgKKmj5Bb6f_zAeSfdQq?usp=sharing) (8_filters and 16_filters denote the models trained with nb_filters=8 and nb_filters=16, respectively).
 
+To evaluate the performance of the model run the file [load_alexnet_evaluate.py](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/load_alexnet_evaluate.py), specifying the directories of the trained model and dataset. This will output a matrix of dimension (4×4) with the true positives (TP), false negatives (FN), false positives (FP) and true negatives (TN) for each class separately:
+
+```
+|      | TP | FN | FP | TN |
+|------|----|----|----|----|
+| MI   |    |    |    |    |
+| STTC |    |    |    |    |
+| CD   |    |    |    |    |
+| HYP  |    |    |    |    |
+```
+
 # Acknowledgements
 
 * The signal to image transformation methods (implemented in [create_images.py](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/create_images.py) and [ecgtoimage.ipynb](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/ecgtoimage.ipynb)) are based on the publicly available implementation by [Ahmad et al., 2021, ECG Heartbeat Classification Using Multimodal Fusion](https://github.com/zaamad/ECG-Heartbeat-Classification-Using-Multimodal-Fusion)
