@@ -36,7 +36,7 @@ train_dev_test_dataset
     └── labels
 ```
 
-To train the model use the following command (correctly specifying the directory of the dataset (using -data) and the directory to save the model (using -path_save_model). Other parameters can be specified as explained [here](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/AlexNet.py#L145-L157).
+To train the model use the following command (correctly specifying the directory of the dataset (using ```-data```) and the directory to save the model (using ```-path_save_model```). Other parameters can be specified as explained [here](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/AlexNet.py#L145-L157).
 
 ```
 python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  
