@@ -1,6 +1,6 @@
 # DL_ECG_Classification
 
-Practical project to explore a multimodal deep learning approach for ECG classification. 
+Practical project to compare how different methods for ECG signal representation perform in ECG classification; and to explore a multimodal DL approach to fuse the two models, leveraging the different structures of signal representations.
 
 
 # Dataset
