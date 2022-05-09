@@ -13,7 +13,7 @@ Examples of the ECG signal obtained with leads I, II and V2 for the ECG record 1
 
 
 
-# Image Sub-Net: AlexNet Model for ECG classification
+# Image Sub-Net: CNN based on the AlexNet Model for ECG classification
 
 Examples of GAF (left), MTF (middle) and RP (right) images for the ECG record 17110 (with ground truth label NORM), corresponding to leads I, II and V2:
 
