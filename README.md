@@ -24,7 +24,7 @@ To obtain the images shown above run the file [create_images.py](https://github.
 This will create a directory with the training, validation and test sets with the following tree structure:
 
 ```
-train_val_test_dataset
+train_dev_test_dataset
 ├── train
 │   ├── images
 │   └── labels
