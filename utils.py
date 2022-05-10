@@ -1,5 +1,3 @@
-#code based on the source code of homework 1 and homework 2 of the 
-#deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 import random
 
 import numpy as np
@@ -11,6 +9,7 @@ from torch.utils.data import Dataset
 import cv2
 import os
 import tifffile
+
 
 def configure_device(gpu_id):
     if gpu_id is not None:
@@ -81,6 +80,42 @@ def read_data(path, partition, idx):
     #image = image.transpose(2,0,1) #channels, x, y
     label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
+
+
+class Dataset_for_RNN(Dataset):
+    '''
+    path/labels_train
+        /X_train
+        /labels_val
+        /X_val
+        /labels_test
+        /X_test
+    '''
+    def __init__(self, path, train_dev_test, part='train'):
+        self.path = path
+        self.part = part
+        self.train_dev_test = train_dev_test
+
+    def __len__(self):
+        if self.part == 'train':
+            return self.train_dev_test[0]
+        elif self.part == 'dev':
+            return self.train_dev_test[1]
+        elif self.part == 'test':
+            return self.train_dev_test[2]
+
+    def __getitem__(self, idx):
+        X, y = read_data_for_RNN(self.path, self.part, idx)
+        return torch.tensor(X).float(), torch.tensor(y).float()
+
+
+def read_data_for_RNN(path, partition, idx):
+    path_labels = str(path) + 'labels_' + str(partition)
+    path_X = str(path) + 'X_rnn_' + str(partition)
+    index = idx
+    label = np.load(str(path_labels) + '/' + str(index)+'.npy')
+    X = np.load(str(path_X) + '/' + str(index)+'.npy')
+    return X, label
 
 
 #performance evaluation, compute the tp, fn, fp, and tp for each disease class
