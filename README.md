@@ -44,6 +44,33 @@ python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_sav
 
 The models that we trained are available [here](https://drive.google.com/drive/folders/1IqFgX6fq-zqcwgKKmj5Bb6f_zAeSfdQq?usp=sharing) (8_filters and 16_filters denote the models trained with nb_filters=8 and nb_filters=16, respectively).
 
+Configuration of the CNN based on the AlexNet model. nb_filters denotes the number of filters in the first layer used to compute the number of filters in the following layers; batch denotes the batch size:
+```
+|           Layer         |                   Size                 |
+|:-----------------------:|:--------------------------------------:|
+|     Convolutional 2D    |        (batch, nb_filters, 62,62)      |
+|           ReLU          |       (batch, nb_filters, 62, 62)      |
+|       MaxPooling 2D     |        (batch, nb_filters, 30,30)      |
+|        Dropout 2D       |        (batch, nb_filters, 30,30)      |
+|     Convolutional 2D    |       (batch, nb_filters×2, 30,30)     |
+|           ReLU          |     (batch,  nb_filters×2,   30,30)    |
+|       MaxPooling 2D     |     (batch,  nb_filters×2,   14,14)    |
+|        Dropout 2D       |     (batch,  nb_filters×2,   14,14)    |
+|     Convolutional 2D    |     (batch,  nb_filters×4,   14,14)    |
+|           ReLU          |     (batch,  nb_filters×4,   14,14)    |
+|     Convolutional 2D    |     (batch,  nb_filters×8,   14,14)    |
+|           ReLU          |       (batch, nb_filters×8, 14,14)     |
+|     Convolutional 2D    |           (batch, 256, 14,14)          |
+|           ReLU          |           (batch, 256, 14,14)          |
+|       MaxPooling 2D     |            (batch, 256, 6,6)           |
+|        Dropout 2D       |            (batch, 256, 6,6)           |
+|          Linear         |              (batch, 4096)             |
+|           ReLU          |              (batch, 4096)             |
+|          Linear         |              (batch, 2048)             |
+|           ReLU          |              (batch, 2048)             |
+|          Linear         |               (batch,  4)              |
+``` 
+
 To evaluate the performance of the model run the file [load_alexnet_evaluate.py](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/load_alexnet_evaluate.py), specifying the directories of the trained model and dataset. This will output a matrix of dimension (4×4) with the true positives (TP), false negatives (FN), false positives (FP) and true negatives (TN) for each class separately:
 
 ```
