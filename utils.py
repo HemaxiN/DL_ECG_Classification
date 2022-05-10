@@ -1,3 +1,6 @@
+#code based on the source code of homework 1 and homework 2 of the 
+#deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
+
 import random
 
 import numpy as np
