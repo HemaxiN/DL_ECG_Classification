@@ -140,7 +140,7 @@ def compute_scores_dev(matrix):
     return np.mean(sensitivity), np.mean(specificity)
 
 def computetpfnfp(pred, gt, i, matrix):
-    if pred==0 and pred==0: #tn
+    if gt==0 and pred==0: #tn
         matrix[i,3] +=1
     if gt==1 and pred==0: #fn
         matrix[i,1] +=1
