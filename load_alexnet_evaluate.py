@@ -11,7 +11,7 @@ from AlexNet import *
 #define the model
 model = AlexNet(4)
 #load the weighs of the model
-model.load_state_dict(torch.load('/mnt/2TBData/hemaxi/ProjetoDL/model'))
+model.load_state_dict(torch.load('/mnt/2TBData/hemaxi/ProjetoDL/trained_models/alexnet'))
 model.eval() #model in the evaluation mode
 
 #generator for the test dataset
