@@ -23,7 +23,7 @@ class AlexNet(nn.Module):
             n_classes (int): Number of classes in our classification problem
         """
         super(AlexNet, self).__init__()
-        nb_filters = 8 #number of filters in the first layer
+        nb_filters = 16 #number of filters in the first layer
         self.n_classes = n_classes
         self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
@@ -43,7 +43,7 @@ class AlexNet(nn.Module):
         """
         Forward Propagation
         Args:
-            X: batch of training examples with dimension (batch_size, 9, 1000, 1000) 
+            X: batch of training examples with dimension (batch_size, 9, 256, 256) 
         """
         x1 = self.relu(self.conv2d_1(X))
         maxpool1 =  self.maxpool2d(x1)
@@ -120,7 +120,7 @@ def evaluate(model,dataloader, part, gpu_id=None):
         return matrix
 
 def compute_loss(model, dataloader, criterion, gpu_id=None):
-	#compute the validation loss at the end of each epoch
+    #compute the validation loss at the end of each epoch
     model.eval()
     with torch.no_grad():
         val_losses = []
@@ -204,6 +204,7 @@ def main():
     valid_specificity = []
     valid_sensitivity = []
     train_losses = []
+    last_valid_loss = 100000
     for ii in epochs:
         print('Training epoch {}'.format(ii))
         for i, (X_batch, y_batch) in enumerate(train_dataloader):
@@ -231,9 +232,10 @@ def main():
         print('Valid specificity: %.4f' % (valid_specificity[-1]))
         print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
         
-        if ii%20 ==0:
-	        #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
-	        torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
+        if val_loss<last_valid_loss:
+            #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
+            torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
+            last_valid_loss = val_loss
 
     print('Final Test Results:')
     print(evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id))

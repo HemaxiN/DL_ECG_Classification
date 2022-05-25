@@ -91,20 +91,20 @@ class Block(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, ResBlock, layer_list, num_classes, num_channels=9):
         super(ResNet, self).__init__()
-        self.in_channels = 64
+        self.in_channels = 16
         
-        self.conv1 = nn.Conv2d(num_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        self.batch_norm1 = nn.BatchNorm2d(64)
+        self.conv1 = nn.Conv2d(num_channels, 16, kernel_size=7, stride=2, padding=3, bias=False)
+        self.batch_norm1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU()
         self.max_pool = nn.MaxPool2d(kernel_size = 3, stride=2, padding=1)
         
-        self.layer1 = self._make_layer(ResBlock, layer_list[0], planes=64)
-        self.layer2 = self._make_layer(ResBlock, layer_list[1], planes=128, stride=2)
-        self.layer3 = self._make_layer(ResBlock, layer_list[2], planes=256, stride=2)
-        self.layer4 = self._make_layer(ResBlock, layer_list[3], planes=512, stride=2)
+        self.layer1 = self._make_layer(ResBlock, layer_list[0], planes=16)
+        self.layer2 = self._make_layer(ResBlock, layer_list[1], planes=32, stride=2)
+        self.layer3 = self._make_layer(ResBlock, layer_list[2], planes=64, stride=2)
+        self.layer4 = self._make_layer(ResBlock, layer_list[3], planes=128, stride=2)
         
         self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(512*ResBlock.expansion, num_classes)
+        self.fc = nn.Linear(128*ResBlock.expansion, num_classes)
         
     def forward(self, x):
         x = self.relu(self.batch_norm1(self.conv1(x)))
@@ -276,7 +276,7 @@ def main():
     class_weights = class_weights.to(opt.gpu_id)
     criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights) #https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
-    print('AAAAA')
+
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
     train_mean_losses = []
@@ -284,6 +284,7 @@ def main():
     valid_specificity = []
     valid_sensitivity = []
     train_losses = []
+    last_val_loss = 10000
     for ii in epochs:
         print('Training epoch {}'.format(ii))
         for i, (X_batch, y_batch) in enumerate(train_dataloader):
@@ -311,9 +312,10 @@ def main():
         print('Valid specificity: %.4f' % (valid_specificity[-1]))
         print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
         
-        if ii%20 ==0:
-	        #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
-	        torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
+        if val_loss<last_val_loss:
+            #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
+            torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
+            last_val_loss = val_loss
 
     print('Final Test Results:')
     print(evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id))
