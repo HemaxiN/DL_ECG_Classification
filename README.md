@@ -44,7 +44,7 @@ python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_sav
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/CNN.png)
 
-The models that we trained are available [here](https://drive.google.com/drive/folders/1IqFgX6fq-zqcwgKKmj5Bb6f_zAeSfdQq?usp=sharing) (8_filters and 16_filters denote the models trained with nb_filters=8 and nb_filters=16, respectively).
+The models that we trained are available [here](https://drive.google.com/drive/folders/12LVLYfjd2N4mTuMwAmtJ6wOwm3y9HWAT?usp=sharing), (alexnet and resnet denote respectively the best alexnet and resnet models based on their performance on the validation set).
 
 Configuration of the CNN based on the AlexNet model. nb_filters denotes the number of filters in the first layer used to compute the number of filters in the following layers; batch denotes the batch size:
 ```
