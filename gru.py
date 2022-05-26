@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN
+from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN, plot_losses
 
 from datetime import datetime
 
@@ -123,6 +123,26 @@ def evaluate(model, dataloader, part, gpu_id=None):
         # cols: TP, FN, FP, TN
 
 
+# validation loss
+def compute_loss(model, dataloader, criterion, gpu_id=None):
+    model.eval()
+    with torch.no_grad():
+        val_losses = []
+        for i, (x_batch, y_batch) in enumerate(dataloader):
+            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
+            y_pred = model(x_batch)
+            loss = criterion(y_pred, y_batch)
+            val_losses.append(loss.item())
+            del x_batch
+            del y_batch
+            torch.cuda.empty_cache()
+
+        model.train()
+
+        return statistics.mean(val_losses)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-data', default='Dataset/data_for_rnn/',
@@ -140,6 +160,7 @@ def main():
     parser.add_argument('-path_save_model', default='save_models/',
                         help='Path to save the model')
     parser.add_argument('-num_layers', type=int, default=2)
+    parser.add_argument('-hidden_size', type=int, default=128)
     opt = parser.parse_args()
 
     configure_seed(seed=42)
@@ -156,9 +177,9 @@ def main():
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     input_size = 3
-    hidden_size = 128
+    hidden_size = opt.hidden_size
     num_layers = opt.num_layers
-    n_classes = 4  # 4 diseases + normal
+    n_classes = 4
 
     # initialize the model
     model = RNN(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id)
@@ -187,6 +208,7 @@ def main():
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
     train_mean_losses = []
+    valid_mean_losses = []
     valid_specificity = []
     valid_sensitivity = []
     train_losses = []
@@ -205,6 +227,8 @@ def main():
 
         train_mean_losses.append(mean_loss)
         sensitivity, specificity = evaluate(model, dev_dataloader, 'dev', gpu_id=opt.gpu_id)
+        val_loss = compute_loss(model, dev_dataloader, criterion, gpu_id=opt.gpu_id)
+        valid_mean_losses.append(val_loss)
         valid_sensitivity.append(sensitivity)
         valid_specificity.append(specificity)
         print('Valid specificity: %.4f' % (valid_specificity[-1]))
@@ -212,12 +236,37 @@ def main():
 
         dt = datetime.now()
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
-        torch.save(model.state_dict(), os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(ii.item())))
+        if val_loss == np.min(valid_mean_losses):
+            torch.save(model.state_dict(),
+                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(ii.item())))
+        elif sensitivity == np.max(valid_sensitivity):
+            torch.save(model.state_dict(),
+                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model_val' + str(ii.item())))
 
-    print('Final Test Results:')
-    print(evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id))
+    # Results on test set:
+    matrix = evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
+    MI_sensi = matrix[0, 0] / (matrix[0, 0] + matrix[0, 1])
+    MI_spec = matrix[0, 3] / (matrix[0, 3] + matrix[0, 2])
+    STTC_sensi = matrix[1, 0] / (matrix[1, 0] + matrix[1, 1])
+    STTC_spec = matrix[1, 3] / (matrix[1, 3] + matrix[1, 2])
+    CD_sensi = matrix[2, 0] / (matrix[2, 0] + matrix[2, 1])
+    CD_spec = matrix[2, 3] / (matrix[2, 3] + matrix[2, 2])
+    HYP_sensi = matrix[3, 0] / (matrix[3, 0] + matrix[3, 1])
+    HYP_spec = matrix[3, 3] / (matrix[3, 3] + matrix[3, 2])
+    mean_sensi = np.mean(matrix[:, 0]) / (np.mean(matrix[:, 0]) + np.mean(matrix[:, 1]))
+    mean_spec = np.mean(matrix[:, 3]) / (np.mean(matrix[:, 3]) + np.mean(matrix[:, 2]))
+    file = open('results_aut.txt', 'w')
+    print('Final Test Results: \n ' + str(matrix) + '\n' + 'MI: sensitivity - ' + str(MI_sensi) + '; specificity - '
+          + str(MI_spec) + '\n' + 'STTC: sensitivity - ' + str(STTC_sensi) + '; specificity - ' + str(STTC_spec)
+          + '\n' + 'CD: sensitivity - ' + str(CD_sensi) + '; specificity - ' + str(CD_spec)
+          + '\n' + 'HYP: sensitivity - ' + str(HYP_sensi) + '; specificity - ' + str(HYP_spec)
+          + '\n' + 'mean: sensitivity - ' + str(mean_sensi) + '; specificity - ' + str(mean_spec), file=file)
+    file.close()
+
     # plot
-    plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+    # plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+    plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss',
+                name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_specificity, ylabel='Specificity',
          name='validation-specificity-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_sensitivity, ylabel='Sensitivity',

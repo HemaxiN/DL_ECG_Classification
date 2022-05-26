@@ -16,32 +16,36 @@ import numpy as np
 import os
 
 
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, gpu_id=None, **kwargs):
+class CNN1d_LSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, n_classes, dropout_rate, gpu_id=None, **kwargs):
         """
         Define the layers of the model
         Args:
             input_size (int): "Feature" size (in this case, it is 3)
             hidden_size (int): Number of hidden units
-            num_layers (int): Number of hidden RNN layers
             n_classes (int): Number of classes in our classification problem
         """
-        super(LSTM, self).__init__()
-        self.input_size = input_size
+        super(CNN1d_LSTM, self).__init__()
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
         self.n_classes = n_classes
         self.gpu_id = gpu_id
         self.dropout_rate = dropout_rate
 
-        # RNN can be replaced with GRU/LSTM (for GRU the rest of the model stays exactly the same)
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout_rate, batch_first=True)  # batch_first means that the input must have as first dimension the batch size
-        # x - > (batch_size, seq_length, input_size) (input of the model)
+        self.cnn1d_1 = nn.Conv1d(input_size, input_size*2, kernel_size=5)
+        self.cnn1d_2 = nn.Conv1d(input_size * 2, input_size*4, kernel_size=5)
+        self.cnn1d_3 = nn.Conv1d(input_size * 4, input_size * 8, kernel_size=5)
+        # x - > (batch_size, input_channels, signal_length)
+
+        self.relu = nn.ReLU()
+
+        self.maxpool = nn.MaxPool1d(2)  # default stride is the kernel size (2)
+
+        self.dropout = nn.Dropout(p=dropout_rate)
+
+        self.lstm = nn.LSTM(input_size*8, hidden_size, num_layers=1, dropout=dropout_rate, batch_first=True)  # batch_first means that the input must have as first dimension the batch size
 
         self.fc = nn.Linear(hidden_size, n_classes)  # linear layer for the classification part
         # the fully connected layer (fc) only uses the last timestep of the output of the RNN to do the classification
-
-        #self.ol = nn.Sigmoid()
 
     def forward(self, X, **kwargs):
         """
@@ -50,15 +54,30 @@ class LSTM(nn.Module):
         Args:
             X: batch of training examples with dimension (batch_size, 1000, 3)
         """
-        # initial hidden state:
-        h_0 = torch.zeros(self.num_layers, X.size(0), self.hidden_size).to(self.gpu_id)
-        c_0 = torch.zeros(self.num_layers, X.size(0), self.hidden_size).to(self.gpu_id)
+        batch_size = X.size(0)
+        seq_len = X.size(1)
+        num_feat = X.size(2)  # same as input_size
 
-        out_rnn, _ = self.lstm(X, (h_0, c_0))
+        # input of the 1D CNN
+        x_1dcnn = torch.reshape(X, (batch_size, num_feat, seq_len))
+
+        # conv
+        x1 = self.dropout(self.maxpool(self.relu(self.cnn1d_1(x_1dcnn))))
+        x2 = self.dropout(self.maxpool(self.relu(self.cnn1d_2(x1))))
+        x3 = self.dropout(self.maxpool(self.relu(self.cnn1d_3(x2))))
+
+        # initial hidden state:
+        h_0 = torch.zeros(1, X.size(0), self.hidden_size).to(self.gpu_id)
+        c_0 = torch.zeros(1, X.size(0), self.hidden_size).to(self.gpu_id)
+
+        # input of the lstm layer: x - > (batch_size, seq_length, input_size)
+        x_resh = torch.reshape(x3, (batch_size, x3.size(2), x3.size(1)))
+
+        x4, _ = self.lstm(x_resh, (h_0, c_0))
         # out_rnn shape: (batch_size, seq_length, hidden_size) = (batch_size, 1000, hidden_size)
 
         # decode the hidden state of only the last timestep (other approaches are possible, such as the mean of all states, ..)
-        out_rnn = out_rnn[:, -1, :]
+        out_rnn = x4[:, -1, :]
         # out_rnn shape: (batch_size, hidden_size) - ready to enter the fc layer
 
         out_fc = self.fc(out_rnn)
@@ -103,7 +122,7 @@ def evaluate(model, dataloader, part, gpu_id=None):
     X (batch_size, 1000, 3) : batch of examples
     y (batch_size,4): ground truth labels_train
     """
-    model.eval()  # set dropout and batch normalization layers to evaluation mode before running inference
+    model.eval()
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
@@ -162,7 +181,6 @@ def main():
     parser.add_argument('-gpu_id', type=int, default=None)
     parser.add_argument('-path_save_model', default='save_models/',
                         help='Path to save the model')
-    parser.add_argument('-num_layers', type=int, default=2)
     parser.add_argument('-hidden_size', type=int, default=128)
     opt = parser.parse_args()
 
@@ -170,6 +188,7 @@ def main():
     configure_device(opt.gpu_id)
 
     samples = [17111, 2156, 2163]
+    # samples = [100, 100, 100]
     print("Loading data...")  # input manual nexamples train, dev e test
     train_dataset = Dataset_for_RNN(opt.data, samples, 'train')
     dev_dataset = Dataset_for_RNN(opt.data, samples, 'dev')
@@ -181,11 +200,11 @@ def main():
 
     input_size = 3
     hidden_size = opt.hidden_size
-    num_layers = opt.num_layers
+    #num_layers = opt.num_layers
     n_classes = 4
 
     # initialize the model
-    model = LSTM(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id)
+    model = CNN1d_LSTM(input_size, hidden_size, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id)
     model = model.to(opt.gpu_id)
 
     # get an optimizer
@@ -218,12 +237,17 @@ def main():
     for ii in epochs:
         print('Training epoch {}'.format(ii))
         for i, (X_batch, y_batch) in enumerate(train_dataloader):
+            # print('{} of {}'.format(i + 1, len(train_dataloader)), end='\r', flush=True)
+            #print(i, flush=True)
             loss = train_batch(
                 X_batch, y_batch, model, optimizer, criterion, gpu_id=opt.gpu_id)
+            # input()
             del X_batch
             del y_batch
             torch.cuda.empty_cache()
+            # input()
             train_losses.append(loss)
+            # print(loss, flush=True)
 
         mean_loss = torch.tensor(train_losses).mean().item()
         print('Training loss: %.4f' % (mean_loss))

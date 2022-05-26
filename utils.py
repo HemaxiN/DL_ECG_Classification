@@ -35,6 +35,7 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.plot(epochs, plottable)
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
 
+
 def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.clf()
     plt.xlabel('Epoch')
@@ -44,6 +45,7 @@ def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.plot(epochs, train_losses, label='train')
     plt.legend()
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+
 
 #create a generator to read the images as we train the model
 #(similar to flow_from_directory Keras)
