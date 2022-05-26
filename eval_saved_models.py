@@ -9,21 +9,21 @@ from cnn_lstm import CNN1d_LSTM, evaluate
 from gru import RNN
 
 # hyperparameters
-hidden_size = 256
+hidden_size = 128
 num_layers = 3
 dropout_rate = 0.3
 
 # LSTM
-model = LSTM(3, hidden_size, num_layers, 4, dropout_rate, None)
-model.load_state_dict(torch.load('results/dropout/lstm_3lay_256hu/1653446471.679398model147', map_location=torch.device('cpu')))
+#model = LSTM(3, hidden_size, num_layers, 4, dropout_rate, None)
+#model.load_state_dict(torch.load('', map_location=torch.device('cpu')))
 
 # 1D-CNN + LSTM
 #model = CNN1d_LSTM(3, hidden_size, 4, dropout_rate, None)
 #model.load_state_dict(torch.load('results/dropout/cnn_lstm_256hu/1653325075.731274model_val102', map_location=torch.device('cpu')))
 
 # GRU
-#model = RNN(3, hidden_size, num_layers, 4, dropout_rate, None)
-#model.load_state_dict(torch.load('results/dropout/gru_3lay_256hu/1653532257.011951model65', map_location=torch.device('cpu')))
+model = RNN(3, hidden_size, num_layers, 4, dropout_rate, None)
+model.load_state_dict(torch.load('best_trained_rnns/gru_3lay_128hu', map_location=torch.device('cpu')))
 
 #model in the evaluation mode
 model.eval()
