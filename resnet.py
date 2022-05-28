@@ -1,41 +1,33 @@
 #Code based on the source code of homework 1 and homework 2 of the 
 #deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
-import argparse
 
+#import the packages
+import argparse
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-
 from utils import configure_seed, configure_device, plot, ECGImageDataset, compute_scores_dev, compute_scores, plot_losses
-
 #auxiliary functions to evaluate the performance of the model
 from sklearn.metrics import recall_score
 import statistics
 import numpy as np
-
 import os
-
 import torch
 import torch.nn as  nn
 import torch.nn.functional as F
 
-#code adapted from:
+#code for ResNet adapted from:
 #https://github.com/JayPatwardhan/ResNet-PyTorch/blob/master/ResNet/ResNet.py
-
 class Bottleneck(nn.Module):
     expansion = 4
     def __init__(self, in_channels, out_channels, i_downsample=None, stride=1):
         super(Bottleneck, self).__init__()
-        
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
         self.batch_norm1 = nn.BatchNorm2d(out_channels)
-        
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1)
         self.batch_norm2 = nn.BatchNorm2d(out_channels)
-        
         self.conv3 = nn.Conv2d(out_channels, out_channels*self.expansion, kernel_size=1, stride=1, padding=0)
         self.batch_norm3 = nn.BatchNorm2d(out_channels*self.expansion)
-        
         self.i_downsample = i_downsample
         self.stride = stride
         self.relu = nn.ReLU()
@@ -43,42 +35,33 @@ class Bottleneck(nn.Module):
     def forward(self, x):
         identity = x.clone()
         x = self.relu(self.batch_norm1(self.conv1(x)))
-        
         x = self.relu(self.batch_norm2(self.conv2(x)))
-        
         x = self.conv3(x)
         x = self.batch_norm3(x)
-        
         #downsample if needed
         if self.i_downsample is not None:
             identity = self.i_downsample(identity)
         #add identity
         x+=identity
         x=self.relu(x)
-        
         return x
 
 class Block(nn.Module):
     expansion = 1
     def __init__(self, in_channels, out_channels, i_downsample=None, stride=1):
         super(Block, self).__init__()
-       
-
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, stride=stride, bias=False)
         self.batch_norm1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, stride=stride, bias=False)
         self.batch_norm2 = nn.BatchNorm2d(out_channels)
-
         self.i_downsample = i_downsample
         self.stride = stride
         self.relu = nn.ReLU()
 
     def forward(self, x):
       identity = x.clone()
-
       x = self.relu(self.batch_norm2(self.conv1(x)))
       x = self.batch_norm2(self.conv2(x))
-
       if self.i_downsample is not None:
           identity = self.i_downsample(identity)
       print(x.shape)
@@ -86,47 +69,37 @@ class Block(nn.Module):
       x += identity
       x = self.relu(x)
       return x
-
-
-        
-        
+  
 class ResNet(nn.Module):
     def __init__(self, ResBlock, layer_list, num_classes, num_channels=9):
         super(ResNet, self).__init__()
         self.in_channels = 16
-        
         self.conv1 = nn.Conv2d(num_channels, 16, kernel_size=7, stride=2, padding=3, bias=False)
         self.batch_norm1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU()
         self.max_pool = nn.MaxPool2d(kernel_size = 3, stride=2, padding=1)
-        
         self.layer1 = self._make_layer(ResBlock, layer_list[0], planes=16)
         self.layer2 = self._make_layer(ResBlock, layer_list[1], planes=32, stride=2)
         self.layer3 = self._make_layer(ResBlock, layer_list[2], planes=64, stride=2)
         self.layer4 = self._make_layer(ResBlock, layer_list[3], planes=128, stride=2)
-        
         self.avgpool = nn.AdaptiveAvgPool2d((1,1))
         self.fc = nn.Linear(128*ResBlock.expansion, num_classes)
         
     def forward(self, x):
         x = self.relu(self.batch_norm1(self.conv1(x)))
         x = self.max_pool(x)
-
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        
         x = self.avgpool(x)
         x = x.reshape(x.shape[0], -1)
         x = self.fc(x)
-        
         return x
         
     def _make_layer(self, ResBlock, blocks, planes, stride=1):
         ii_downsample = None
         layers = []
-        
         if stride != 1 or self.in_channels != planes*ResBlock.expansion:
             ii_downsample = nn.Sequential(
                 nn.Conv2d(self.in_channels, planes*ResBlock.expansion, kernel_size=1, stride=stride),
@@ -141,7 +114,6 @@ class ResNet(nn.Module):
             
         return nn.Sequential(*layers)
 
-       
 def ResNet50(num_classes, channels=9):
     return ResNet(Bottleneck, [3,4,6,3], num_classes, channels)
 
@@ -184,19 +156,13 @@ def evaluate(model,dataloader, part, gpu_id=None):
             print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = predict(model, x_batch)
-            #print('true')
             y_true = np.array(y_batch.cpu())
-            #print(y_true)
-            #print('pred')
-            #print(y_pred)
             matrix = compute_scores(y_true,y_pred, matrix)
-
+            #delete unnecessary variables due to memory issues
             del x_batch
             del y_batch
             torch.cuda.empty_cache()
-
         model.train()
-
     if part == 'dev':
         return compute_scores_dev(matrix)
     if part == 'test':
@@ -215,12 +181,8 @@ def compute_loss(model, dataloader, criterion, gpu_id=None):
             del x_batch
             del y_batch
             torch.cuda.empty_cache()
-
         model.train()
-
         return statistics.mean(val_losses)
-
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -252,7 +214,6 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
-
 
     n_classes = 4  # 4 diseases + normal
 
@@ -315,7 +276,7 @@ def main():
         print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
         
         if val_loss<last_val_loss:
-            #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
+            #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the best model based on the validation loss)
             torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
             last_val_loss = val_loss
 
@@ -325,8 +286,6 @@ def main():
     plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss', name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_specificity, ylabel='Specificity', name='validation-specificity-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_sensitivity, ylabel='Sensitivity', name='validation-sensitivity-{}-{}'.format(opt.learning_rate, opt.optimizer))
-
-
 
 if __name__ == '__main__':
     main()
