@@ -66,17 +66,17 @@ class ECGImageDataset(Dataset):
             return self.train_dev_test[2]
 
     def __getitem__(self, idx):
-        X, y = read_data(self.path, self.part, idx)
+        X, y = read_data_for_CNN(self.path, self.part, idx)
         return torch.tensor(X).float(), torch.tensor(y).float()
 
-def read_data(path, partition, idx):
+def read_data_for_CNN(path, partition, idx):
     '''Read the ECG Image Data'''
-    final_path = os.path.join(path, partition)
+    path_labels = str(path) + 'labels_' + str(partition)
+    path_X = str(path) + 'X_cnn_' + str(partition)
     index = idx
-    image = tifffile.imread(os.path.join(final_path, 'images/'+str(index)+'.tif'))
+    label = np.load(str(path_labels) + '/' + str(index)+'.npy')
+    X = tifffile.imread(str(path_X) + '/' + str(index)+'.tif')
     image = image/255.0 #normalization
-    #image = image.transpose(2,0,1) #channels, x, y
-    label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
 
 class Dataset_for_RNN(Dataset):

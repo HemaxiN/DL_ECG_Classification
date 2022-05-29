@@ -2,6 +2,7 @@
 # Pre-processing of data (X) to be used in the RNNs and creation images to be used in the 2DCNNs.
 
 from pre_proc_for_rnns import X_for_RNNs, labels
+from pre_proc_for_CNNs import X_for_CNNs
 import create_images
 
 # path to the "Processed" data folder https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV
@@ -18,8 +19,11 @@ X_for_RNNs(processed_directory, 'dev', save_dir=path_to_save)
 X_for_RNNs(processed_directory, 'test', save_dir=path_to_save)
 
 # save X_cnn_train
+X_for_CNNs(processed_directory, 'train', save_dir=path_to_save)
 # save X_cnn_dev
+X_for_CNNs(processed_directory, 'dev', save_dir=path_to_save)
 # save X_cnn_test
+X_for_CNNs(processed_directory, 'test', save_dir=path_to_save)
 
 # save labels_train
 labels(processed_directory, 'train', save_dir=path_to_save)
