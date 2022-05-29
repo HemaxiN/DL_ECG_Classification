@@ -2,37 +2,45 @@ import torch
 import numpy as np
 
 from torch.utils.data import DataLoader
-
 from utils import Dataset_for_RNN
+
 from lstm import LSTM
 from cnn_lstm import CNN1d_LSTM, evaluate
 from gru import RNN
 
-# hyperparameters
-hidden_size = 128
-num_layers = 3
-dropout_rate = 0.3
+gpu_id = None
+device = 'cpu'
 
 # LSTM
-#model = LSTM(3, hidden_size, num_layers, 4, dropout_rate, None)
-#model.load_state_dict(torch.load('', map_location=torch.device('cpu')))
+# define the model (according to the trained model which weights will be loaded)
+model_lstm = LSTM(input_size=3, hidden_size=128, num_layers=2, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
+                  bidirectional=False)
+# load the weights
+path_to_weights = 'best_trained_rnns/lstm_2lay_128hu'
+model_lstm.load_state_dict(torch.load(path_to_weights, map_location=torch.device(device)))
 
-# 1D-CNN + LSTM
-#model = CNN1d_LSTM(3, hidden_size, 4, dropout_rate, None)
-#model.load_state_dict(torch.load('results/dropout/cnn_lstm_256hu/1653325075.731274model_val102', map_location=torch.device('cpu')))
+# 1D-CNN + LSTM (same steps as in LSTM)
+model_cnn_lstm = CNN1d_LSTM(input_size=3, hidden_size=128, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id)
+path_to_weights = 'best_trained_rnns/cnn_lstm_128hu'
+model_cnn_lstm.load_state_dict(torch.load(path_to_weights, map_location=torch.device(device)))
 
-# GRU
-model = RNN(3, hidden_size, num_layers, 4, dropout_rate, None)
-model.load_state_dict(torch.load('best_trained_rnns/gru_3lay_128hu', map_location=torch.device('cpu')))
+# GRU (same steps as in LSTM)
+model_gru = RNN(3, hidden_size=128, num_layers=3, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
+                bidirectional=False)
+path_to_weights = 'best_trained_rnns/gru_3lay_128hu'
+model_gru.load_state_dict(torch.load(path_to_weights, map_location=torch.device(device)))
 
-#model in the evaluation mode
+# choose the model for evaluation on test set
+model = model_gru
+
+# model in the evaluation mode
 model.eval()
 
-#generator for the test dataset
+# test dataset
 test_dataset = Dataset_for_RNN('Dataset/data_for_rnn/', [17111, 2156, 2163], 'test')
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-#evaluate the performance of the model
+# evaluate the performance of the model
 matrix = evaluate(model, test_dataloader, 'test', gpu_id=None)
 MI_sensi = matrix[0, 0] / (matrix[0, 0] + matrix[0, 1])
 MI_spec = matrix[0, 3] / (matrix[0, 3] + matrix[0, 2])

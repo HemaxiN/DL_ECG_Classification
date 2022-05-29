@@ -1,23 +1,24 @@
+# Code based on the source code of homework 1 and homework 2 of the
+# deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
+
 import argparse
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN, plot_losses
+from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN, \
+    plot_losses
 
 from datetime import datetime
-
-# auxiliary functions to evaluate the performance of the model
-from sklearn.metrics import recall_score
 import statistics
 import numpy as np
-
 import os
 
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, gpu_id=None, **kwargs):
+    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, bidirectional, gpu_id=None,
+                 **kwargs):
         """
         Define the layers of the model
         Args:
@@ -25,6 +26,8 @@ class LSTM(nn.Module):
             hidden_size (int): Number of hidden units
             num_layers (int): Number of hidden RNN layers
             n_classes (int): Number of classes in our classification problem
+            dropout_rate (float): Dropout rate to apply on all lstm layers except the last one
+            bidirectional (bool): Boolean value: if true, lstm layers are bidirectional
         """
         super(LSTM, self).__init__()
         self.input_size = input_size
@@ -33,39 +36,43 @@ class LSTM(nn.Module):
         self.n_classes = n_classes
         self.gpu_id = gpu_id
         self.dropout_rate = dropout_rate
+        self.bidirectional = bidirectional
 
-        # RNN can be replaced with GRU/LSTM (for GRU the rest of the model stays exactly the same)
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout_rate, batch_first=True)  # batch_first means that the input must have as first dimension the batch size
-        # x - > (batch_size, seq_length, input_size) (input of the model)
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout_rate, batch_first=True,
+                            bidirectional=bidirectional)  # batch_first: first dimension is the batch size
 
-        self.fc = nn.Linear(hidden_size, n_classes)  # linear layer for the classification part
-        # the fully connected layer (fc) only uses the last timestep of the output of the RNN to do the classification
+        if bidirectional:
+            self.d = 2
+        else:
+            self.d = 1
 
-        #self.ol = nn.Sigmoid()
+        self.fc = nn.Linear(hidden_size*self.d, n_classes)  # linear layer for the classification part
 
     def forward(self, X, **kwargs):
         """
         Forward Propagation
 
         Args:
-            X: batch of training examples with dimension (batch_size, 1000, 3)
+            X: batch of training examples with dimension (batch_size, seq_length, input_size) = (batch_size, 1000, 3)
         """
         # initial hidden state:
-        h_0 = torch.zeros(self.num_layers, X.size(0), self.hidden_size).to(self.gpu_id)
-        c_0 = torch.zeros(self.num_layers, X.size(0), self.hidden_size).to(self.gpu_id)
+        h_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
+        c_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
 
         out_rnn, _ = self.lstm(X, (h_0, c_0))
-        # out_rnn shape: (batch_size, seq_length, hidden_size) = (batch_size, 1000, hidden_size)
+        # out_rnn shape: (batch_size, seq_length, hidden_size*d) = (batch_size, 1000, hidden_size*d)
 
-        # decode the hidden state of only the last timestep (other approaches are possible, such as the mean of all states, ..)
-        out_rnn = out_rnn[:, -1, :]
-        # out_rnn shape: (batch_size, hidden_size) - ready to enter the fc layer
+        if self.bidirectional:
+            # concatenate last timestep from the "left-to-right" direction and the first timestep from the
+            # "right-to-left" direction
+            out_rnn = torch.cat((out_rnn[:, -1, :self.hidden_size], out_rnn[:, 0, self.hidden_size:]), dim=1)
+        else:
+            # last timestep
+            out_rnn = out_rnn[:, -1, :]
 
+        # out_rnn shape: (batch_size, hidden_size*d) - ready to enter the fc layer
         out_fc = self.fc(out_rnn)
         # out_fc shape: (batch_size, num_classes)
-
-        #out = self.ol(out_fc)
-        # out shape: (batch_size, num_classes)
 
         return out_fc
 
@@ -103,7 +110,7 @@ def evaluate(model, dataloader, part, gpu_id=None):
     X (batch_size, 1000, 3) : batch of examples
     y (batch_size,4): ground truth labels_train
     """
-    model.eval()  # set dropout and batch normalization layers to evaluation mode before running inference
+    model.eval()  # set dropout and batch normalization layers to evaluation mode
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
@@ -126,7 +133,7 @@ def evaluate(model, dataloader, part, gpu_id=None):
         # cols: TP, FN, FP, TN
 
 
-# validation loss
+# Validation loss
 def compute_loss(model, dataloader, criterion, gpu_id=None):
     model.eval()
     with torch.no_grad():
@@ -148,9 +155,9 @@ def compute_loss(model, dataloader, criterion, gpu_id=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-data', default='Dataset/data_for_rnn/',
+    parser.add_argument('-data', default=None,
                         help="Path to the dataset.")
-    parser.add_argument('-epochs', default=40, type=int,
+    parser.add_argument('-epochs', default=200, type=int,
                         help="""Number of epochs to train the model.""")
     parser.add_argument('-batch_size', default=512, type=int,
                         help="Size of training batch.")
@@ -160,17 +167,18 @@ def main():
     parser.add_argument('-optimizer',
                         choices=['sgd', 'adam'], default='adam')
     parser.add_argument('-gpu_id', type=int, default=None)
-    parser.add_argument('-path_save_model', default='save_models/',
+    parser.add_argument('-path_save_model', default=None,
                         help='Path to save the model')
     parser.add_argument('-num_layers', type=int, default=2)
     parser.add_argument('-hidden_size', type=int, default=128)
+    parser.add_argument('-bidirectional', type=bool, default=False)
     opt = parser.parse_args()
 
     configure_seed(seed=42)
     configure_device(opt.gpu_id)
 
     samples = [17111, 2156, 2163]
-    print("Loading data...")  # input manual nexamples train, dev e test
+    print("Loading data...")
     train_dataset = Dataset_for_RNN(opt.data, samples, 'train')
     dev_dataset = Dataset_for_RNN(opt.data, samples, 'dev')
     test_dataset = Dataset_for_RNN(opt.data, samples, 'test')
@@ -185,7 +193,8 @@ def main():
     n_classes = 4
 
     # initialize the model
-    model = LSTM(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id)
+    model = LSTM(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id,
+                 bidirectional=opt.bidirectional)
     model = model.to(opt.gpu_id)
 
     # get an optimizer
@@ -238,7 +247,8 @@ def main():
         print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
 
         dt = datetime.now()
-        # https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the model at the end of each epoch)
+        # https://pytorch.org/tutorials/beginner/saving_loading_models.html
+        # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
                        os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(ii.item())))
@@ -248,6 +258,8 @@ def main():
 
     # Results on test set:
     matrix = evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
+
+    # compute sensitivity and specificity for each class:
     MI_sensi = matrix[0, 0] / (matrix[0, 0] + matrix[0, 1])
     MI_spec = matrix[0, 3] / (matrix[0, 3] + matrix[0, 2])
     STTC_sensi = matrix[1, 0] / (matrix[1, 0] + matrix[1, 1])
@@ -256,18 +268,19 @@ def main():
     CD_spec = matrix[2, 3] / (matrix[2, 3] + matrix[2, 2])
     HYP_sensi = matrix[3, 0] / (matrix[3, 0] + matrix[3, 1])
     HYP_spec = matrix[3, 3] / (matrix[3, 3] + matrix[3, 2])
+
+    # compute mean sensitivity and specificity:
     mean_sensi = np.mean(matrix[:, 0]) / (np.mean(matrix[:, 0]) + np.mean(matrix[:, 1]))
     mean_spec = np.mean(matrix[:, 3]) / (np.mean(matrix[:, 3]) + np.mean(matrix[:, 2]))
-    file = open('results_aut.txt', 'w')
+
+    # print results:
     print('Final Test Results: \n ' + str(matrix) + '\n' + 'MI: sensitivity - ' + str(MI_sensi) + '; specificity - '
           + str(MI_spec) + '\n' + 'STTC: sensitivity - ' + str(STTC_sensi) + '; specificity - ' + str(STTC_spec)
           + '\n' + 'CD: sensitivity - ' + str(CD_sensi) + '; specificity - ' + str(CD_spec)
           + '\n' + 'HYP: sensitivity - ' + str(HYP_sensi) + '; specificity - ' + str(HYP_spec)
-          + '\n' + 'mean: sensitivity - ' + str(mean_sensi) + '; specificity - ' + str(mean_spec), file=file)
-    file.close()
+          + '\n' + 'mean: sensitivity - ' + str(mean_sensi) + '; specificity - ' + str(mean_spec))
 
     # plot
-    #plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss',
                 name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_specificity, ylabel='Specificity',
