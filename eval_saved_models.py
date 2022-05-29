@@ -10,6 +10,7 @@ from gru import RNN
 
 gpu_id = None
 device = 'cpu'
+path_to_data = None  # Dataset/data
 
 # LSTM
 # define the model (according to the trained model which weights will be loaded)
@@ -37,7 +38,7 @@ model = model_gru
 model.eval()
 
 # test dataset
-test_dataset = Dataset_for_RNN('Dataset/data_for_rnn/', [17111, 2156, 2163], 'test')
+test_dataset = Dataset_for_RNN(path_to_data, [17111, 2156, 2163], 'test')
 test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 # evaluate the performance of the model

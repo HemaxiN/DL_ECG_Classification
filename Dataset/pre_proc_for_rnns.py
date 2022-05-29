@@ -1,8 +1,7 @@
-# Pre-processing of data (X) to be used in the RNNs
-
-#filter the ecg signal (band pass filter)
-#select 3 leads (I, II, V2)
-#normalize
+# Pre-processing of data (X) to be used in the RNNs:
+#   1) filter the ecg signal (band pass filter)
+#   2) select 3 leads (I, II, V2)
+#   3) normalize
 
 import numpy as np
 import pickle
@@ -11,15 +10,11 @@ from scipy.signal import butter, sosfilt
 from scipy.stats import zscore
 
 
-def ecg_proc_for_rnns(partition='train', save_dir=None):
+def X_for_RNNs(path, partition='train', save_dir=None):
 
-	file = 'Dataset/Processed/X_' + str(partition) + '_processed.pickle'
+	file = str(path) + '/X_' + str(partition) + '_processed.pickle'
 	pickle_in = open(file, "rb")
 	X = pickle.load(pickle_in)
-
-	file = 'Dataset/Processed/y_' + str(partition) + '_processed.pickle'
-	pickle_in_y = open(file, "rb")
-	y = pickle.load(pickle_in_y)
 
 	# band pass filter
 	band_pass_filter = butter(2, [1, 45], 'bandpass', fs=100, output='sos')
@@ -27,8 +22,6 @@ def ecg_proc_for_rnns(partition='train', save_dir=None):
 	X_aux = np.zeros((np.shape(X)[0], np.shape(X)[1], 3))
 
 	for i in range(np.shape(X)[0]):
-		y_i = y[i]  # (4)
-		np.save(str(save_dir) + 'labels_' + str(partition) + '/' + str(i) + '.npy', y_i)
 
 		lead_I = X[i][:, 0]  # X[i]: (1000, 12)
 		lead_II = X[i][:, 1]
@@ -48,9 +41,9 @@ def ecg_proc_for_rnns(partition='train', save_dir=None):
 		X_aux[i][:, 1] = lead_II
 		X_aux[i][:, 2] = lead_V2
 
-		np.save(str(save_dir) + 'X_rnn_' + str(partition) + '/' + str(i) + '.npy', X_aux[i])
+		np.save(str(save_dir) + '/X_rnn_' + str(partition) + '/' + str(i) + '.npy', X_aux[i])
 
-	return X_aux
+	return
 
 
 def ecgnorm(ecg):
@@ -58,12 +51,14 @@ def ecgnorm(ecg):
 	return ecg_norm
 
 
-# save X_train, y_train
-ecg_proc_for_rnns('train', save_dir='Dataset/data_for_rnn/')
+def labels(path, partition='train', save_dir=None):
 
-# save X_dev, y_dev
-ecg_proc_for_rnns('dev', save_dir='Dataset/data_for_rnn/')
+	file = str(path) + '/y_' + str(partition) + '_processed.pickle'
+	pickle_in_y = open(file, "rb")
+	y = pickle.load(pickle_in_y)
+	for i in range(np.shape(y)[0]):
+		y_i = y[i]
+		np.save(str(save_dir) + '/labels_' + str(partition) + '/' + str(i) + '.npy', y_i)
+	return
 
-# save X_test, y_test
-ecg_proc_for_rnns('test', save_dir='Dataset/data_for_rnn/')
 
