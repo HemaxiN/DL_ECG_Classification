@@ -1,19 +1,20 @@
-import argparse
+#Code based on the source code of homework 1 and homework 2 of the 
+#deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 
+#import packages
+import argparse
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-
 from utils import configure_seed, configure_device, plot, ECGImageDataset, compute_scores_dev, compute_scores
-
 #auxiliary functions to evaluate the performance of the model
 from sklearn.metrics import recall_score
 import statistics
 import numpy as np
-
 import os
 
-class AlexNet(nn.Module):
+#simple CNN for classification
+class CNN(nn.Module):
     def __init__(self, n_classes, **kwargs):
         """
         Define the layers of the model
@@ -21,7 +22,7 @@ class AlexNet(nn.Module):
         Args:
             n_classes (int): Number of classes in our classification problem
         """
-        super(AlexNet, self).__init__()
+        super(CNN, self).__init__()
         nb_filters  = 16
         self.n_classes = n_classes
         self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
@@ -94,25 +95,17 @@ def evaluate(model,dataloader, part, gpu_id=None):
             print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = predict(model, x_batch)
-            #print('true')
             y_true = np.array(y_batch.cpu())
-            #print(y_true)
-            #print('pred')
-            #print(y_pred)
             matrix = compute_scores(y_true,y_pred, matrix)
-
+            #delete unnecessary variables due to memory issues
             del x_batch
             del y_batch
             torch.cuda.empty_cache()
-
         model.train()
-
     if part == 'dev':
         return compute_scores_dev(matrix)
     if part == 'test':
         return matrix
-
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -134,7 +127,7 @@ def main():
     configure_seed(seed=42)
     configure_device(opt.gpu_id)
 
-    _examples_ = [100,100,100]
+    _examples_ = [17111,2156,2163]
 
     print("Loading data...") ## input manual nexamples train, dev e test
     train_dataset = ECGImageDataset(opt.data, _examples_, 'train')
@@ -144,7 +137,6 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
-
 
     n_classes = 4  # 4 diseases + normal
 
@@ -211,8 +203,6 @@ def main():
     plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_specificity, ylabel='Specificity', name='validation-specificity-{}-{}'.format(opt.learning_rate, opt.optimizer))
     plot(epochs, valid_sensitivity, ylabel='Sensitivity', name='validation-sensitivity-{}-{}'.format(opt.learning_rate, opt.optimizer))
-
-
 
 if __name__ == '__main__':
     main()

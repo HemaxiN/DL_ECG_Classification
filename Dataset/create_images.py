@@ -16,6 +16,7 @@ import os
 from scipy.signal import butter, sosfilt
 from pyts.image import GramianAngularField, MarkovTransitionField
 from sklearn.metrics.pairwise import pairwise_distances
+import cv2
 
 partition = 'train'
 
@@ -28,68 +29,71 @@ y_train_processed = pickle.load(pickle_in)
 save_dir = os.path.join('/content/drive/My Drive/DSL/DS/Images', partition)
 
 def ecgtoimage(X,y,save_dir):
-	#band pass filter
-	band_pass_filter = butter(2, [1, 45], 'bandpass', fs=100, output='sos')
-	for i in range(np.shape(X)[0]):
-		y_i = y[i] #(4)
-		np.save(os.path.join(save_dir, 'labels/' + str(i) + '.npy' ), y_i)
+    #band pass filter
+    band_pass_filter = butter(2, [1, 45], 'bandpass', fs=100, output='sos')
+    for i in range(np.shape(X)[0]):
+        y_i = y[i] #(4)
+        np.save(os.path.join(save_dir, 'labels/' + str(i) + '.npy' ), y_i)
 
-		X_aux = np.zeros((9,1000,1000))
+        X_aux = np.zeros((9,1000,1000))
 
-		X_i = X[i] #(1000,12)
-		lead_I = X_i[:,0]
-		lead_II = X_i[:,1]
-		lead_V2 = X_i[:,7]
+        X_i = X[i] #(1000,12)
+        lead_I = X_i[:,0]
+        lead_II = X_i[:,1]
+        lead_V2 = X_i[:,7]
 
-		#apply a band pass filter (0.05, 40hz)
-		lead_I = sosfilt(band_pass_filter, lead_I)
-		lead_II = sosfilt(band_pass_filter, lead_II)
-		lead_V2 = sosfilt(band_pass_filter, lead_V2)
+        #apply a band pass filter (0.05, 40hz)
+        lead_I = sosfilt(band_pass_filter, lead_I)
+        lead_II = sosfilt(band_pass_filter, lead_II)
+        lead_V2 = sosfilt(band_pass_filter, lead_V2)
 
-		#normalize before transforming into images
-		lead_I = ecgnorm(lead_I)
-		lead_II = ecgnorm(lead_II)
-		lead_V2 = ecgnorm(lead_V2)
+        #normalize before transforming into images
+        lead_I = ecgnorm(lead_I)
+        lead_II = ecgnorm(lead_II)
+        lead_V2 = ecgnorm(lead_V2)
 
-		#transform each signal into three images
-		lead_I_transf = ecgtoimagetransf(lead_I)
-		lead_II_transf = ecgtoimagetransf(lead_II)
-		lead_V2_transf = ecgtoimagetransf(lead_V2)
+        #transform each signal into three images
+        lead_I_transf = ecgtoimagetransf(lead_I)
+        lead_II_transf = ecgtoimagetransf(lead_II)
+        lead_V2_transf = ecgtoimagetransf(lead_V2)
 
-		#save in the final array
-		X_aux[0:3] = lead_I_transf
-		X_aux[3:6] = lead_II_transf
-		X_aux[6:9] = lead_V2_transf
+        #save in the final array
+        X_aux[0:3] = lead_I_transf
+        X_aux[3:6] = lead_II_transf
+        X_aux[6:9] = lead_V2_transf
 
-		X_aux = X_aux*255.0
-		X_aux = X_aux.astype('uint8')
-		tifffile.imwrite(os.path.join(save_dir, 'images/' + str(i) + '.tif' ), X_aux)
+        #resizing the image
+        X_aux = resizing(X_aux)
+
+        X_aux = X_aux*255.0
+        X_aux = X_aux.astype('uint8')
+        tifffile.imwrite(os.path.join(save_dir, 'images/' + str(i) + '.tif' ), X_aux)
 
 
 def ecgnorm(ecg):
-	#output between 0 and 1
-	ecg_norm = (ecg -min(ecg)) / max(ecg-min(ecg))
-	return ecg_norm
+    #output between 0 and 1
+    ecg_norm = (ecg -min(ecg)) / max(ecg-min(ecg))
+    return ecg_norm
 
 def ecgtoimagetransf(ecg):
-	aux_img = np.zeros((3,len(ecg), len(ecg)))
+    aux_img = np.zeros((3,len(ecg), len(ecg)))
 
-	# Gramian Angular Field
-	gaf = GramianAngularField(image_size=len(ecg), method='summation')
+    # Gramian Angular Field
+    gaf = GramianAngularField(image_size=len(ecg), method='summation')
 
-	x_gaf = gaf.fit_transform(ecg.reshape(1,-1))
-	mtf = get_mtf(ecg)
-	rp = recurrence_plot(ecg, steps=10)
+    x_gaf = gaf.fit_transform(ecg.reshape(1,-1))
+    mtf = get_mtf(ecg)
+    rp = recurrence_plot(ecg, steps=10)
 
-	x_gaf = (x_gaf+1)/2
-	mtf = mtf+1
-	rp = (rp+1)/2
+    x_gaf = (x_gaf+1)/2
+    mtf = mtf+1
+    rp = (rp+1)/2
 
-	aux_img[0] = x_gaf
-	aux_img[1] = mtf
-	aux_img[2] = rp 
+    aux_img[0] = x_gaf
+    aux_img[1] = mtf
+    aux_img[2] = rp 
 
-	return aux_img
+    return aux_img
 
 #THE FOLLOWING FUNCTIONS ARE ADAPTED FROM https://github.com/zaamad/ECG-Heartbeat-Classification-Using-Multimodal-Fusion
 
@@ -139,3 +143,16 @@ def get_mtf(x, size=10):
         for j in range(r.shape[1]):
             r[i, j] = y[q[i], q[j]]
     return r / 5. - 1
+
+
+def resizing(X_aux):
+    output = []
+    for z in range(0,9):
+        aux = X_aux[z]
+        aux = cv2.resize(aux,(256,256))
+        output.append(aux)
+    output = np.asarray(output)
+    return output
+
+
+ecgtoimage(X_train_processed, y_train_processed, save_dir)

@@ -1,14 +1,12 @@
 #code based on the source code of homework 1 and homework 2 of the 
 #deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 
+#import the necessary packages
 import random
-
 import numpy as np
 import matplotlib.pyplot as plt
-
 import torch
 from torch.utils.data import Dataset
-
 import cv2
 import os
 import tifffile
@@ -18,7 +16,6 @@ def configure_device(gpu_id):
     if gpu_id is not None:
         torch.cuda.set_device(gpu_id)
 
-
 def configure_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -27,14 +24,12 @@ def configure_seed(seed):
         torch.cuda.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
 
-
 def plot(epochs, plottable, ylabel='', name=''):
     plt.clf()
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
-
 
 def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.clf()
@@ -45,7 +40,6 @@ def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.plot(epochs, train_losses, label='train')
     plt.legend()
     plt.savefig('%s.pdf' % (name), bbox_inches='tight')
-
 
 #create a generator to read the images as we train the model
 #(similar to flow_from_directory Keras)
@@ -75,7 +69,6 @@ class ECGImageDataset(Dataset):
         X, y = read_data(self.path, self.part, idx)
         return torch.tensor(X).float(), torch.tensor(y).float()
 
-
 def read_data(path, partition, idx):
     '''Read the ECG Image Data'''
     final_path = os.path.join(path, partition)
@@ -85,7 +78,6 @@ def read_data(path, partition, idx):
     #image = image.transpose(2,0,1) #channels, x, y
     label = np.load(os.path.join(final_path, 'labels/'+str(index)+'.npy'))
     return image, label
-
 
 class Dataset_for_RNN(Dataset):
     '''
@@ -132,7 +124,6 @@ def compute_scores(y_true, y_pred, matrix):
         for i in range(0,4): #for each class
             matrix = computetpfnfp(pred[i], gt[i], i, matrix)
     return matrix
-
 
 def compute_scores_dev(matrix):
     matrix[matrix==0] = 0.01

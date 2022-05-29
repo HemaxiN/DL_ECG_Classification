@@ -1,10 +1,8 @@
 #import the necessary packages
 import torch
-
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-
 from utils import ECGImageDataset
 from AlexNet import *
 

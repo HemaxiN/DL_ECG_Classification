@@ -12,6 +12,27 @@ y_test_processed.pickle (2163, 4)
 ```
 
 These are saved as numpy arrays and available [here](https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV?usp=sharing).
+
+# Convert the 1D ECG into images 
+
+To obtain the images run the file [create_images.py](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Dataset/create_images.py), specifying the partition ('train', 'dev' or 'test') and the directory containing the [processed files](https://drive.google.com/drive/folders/1Nas7Gqcj-H28Raui_6z06kpWDsM78OBV), and the directory where the images and corresponding labels will be saved.
+
+This will create a directory with the training, validation and test sets with the following tree structure:
+
+```
+train_dev_test_dataset
+├── train
+│   ├── images
+│   └── labels
+└── dev
+│   ├── images
+│   └── labels
+└── test
+    ├── images
+    └── labels
+```
+
+
  
 # Encoding 
 
