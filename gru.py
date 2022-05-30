@@ -59,7 +59,7 @@ class RNN(nn.Module):
         # initial hidden state:
         h_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
 
-        out_rnn, _ = self.rnn(X, h_0)
+        out_rnn, _ = self.rnn(X.to(self.gpu_id), h_0)
         # out_rnn shape: (batch_size, seq_length, hidden_size*d) = (batch_size, 1000, hidden_size*d)
 
         if self.bidirectional:
