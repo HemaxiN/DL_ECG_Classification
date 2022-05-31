@@ -75,7 +75,7 @@ def read_data_for_CNN(path, partition, idx):
     path_X = str(path) + 'X_cnn_' + str(partition)
     index = idx
     label = np.load(str(path_labels) + '/' + str(index)+'.npy')
-    X = tifffile.imread(str(path_X) + '/' + str(index)+'.tif')
+    image = tifffile.imread(str(path_X) + '/' + str(index)+'.tif')
     image = image/255.0 #normalization
     return image, label
 

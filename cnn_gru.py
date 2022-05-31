@@ -16,61 +16,69 @@ import numpy as np
 import os
 
 
-class RNN(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, bidirectional, gpu_id=None,
-                 **kwargs):
+class CNN1d_GRU(nn.Module):
+    def __init__(self, input_size, hidden_size, n_classes, dropout_rate, gpu_id=None, **kwargs):
         """
         Define the layers of the model
         Args:
             input_size (int): "Feature" size (in this case, it is 3)
             hidden_size (int): Number of hidden units
-            num_layers (int): Number of hidden RNN layers
             n_classes (int): Number of classes in our classification problem
-            dropout_rate (float): Dropout rate to be applied in all rnn layers except the last one
-            bidirectional (bool): Boolean value: if true, gru layers are bidirectional
+            dropout_rate (float): Dropout rate to apply to the cnn layers
         """
-        super(RNN, self).__init__()
-        self.input_size = input_size
+        super(CNN1d_GRU, self).__init__()
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
         self.n_classes = n_classes
         self.gpu_id = gpu_id
         self.dropout_rate = dropout_rate
-        self.bidirectional = bidirectional
 
-        # RNN can be replaced with GRU/LSTM (for GRU the rest of the model stays exactly the same)
-        self.rnn = nn.GRU(input_size, hidden_size, num_layers, dropout=dropout_rate, batch_first=True,
-                          bidirectional=bidirectional)  # batch_first: first dimension is the batch size
+        self.cnn1d_1 = nn.Conv1d(input_size, input_size*2, kernel_size=5)
+        self.cnn1d_2 = nn.Conv1d(input_size * 2, input_size*4, kernel_size=5)
+        self.cnn1d_3 = nn.Conv1d(input_size * 4, input_size * 8, kernel_size=5)
 
-        if bidirectional:
-            self.d = 2
-        else:
-            self.d = 1
+        self.relu = nn.ReLU()
 
-        self.fc = nn.Linear(hidden_size*self.d, n_classes)  # linear layer for the classification part
+        self.maxpool = nn.MaxPool1d(2)
+
+        self.dropout = nn.Dropout(p=dropout_rate)
+
+        self.gru = nn.GRU(input_size*8, hidden_size, num_layers=1, batch_first=True)  # batch_first: batch first dimension
+
+        self.fc = nn.Linear(hidden_size, n_classes)  # linear layer for the classification part
+        # the fully connected layer (fc) only uses the last timestep of the output of the RNN to do the classification
 
     def forward(self, X, **kwargs):
         """
         Forward Propagation
 
         Args:
-            X: batch of training examples with dimension (batch_size, 1000, 3)
+            X: batch of training examples with dimension (batch_size, signal_length, input_size)=(batch_size, 1000, 3)
         """
-        # initial hidden state:
-        h_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
+        batch_size = X.size(0)
+        seq_len = X.size(1)
+        num_feat = X.size(2)
 
-        out_rnn, _ = self.rnn(X.to(self.gpu_id), h_0)
-        # out_rnn shape: (batch_size, seq_length, hidden_size*d) = (batch_size, 1000, hidden_size*d)
+        # reshape X to enter the 1D CNN
+        x_1dcnn = torch.reshape(X, (batch_size, num_feat, seq_len))
 
-        if self.bidirectional:
-            # concatenate last timestep from the "left-to-right" direction and the first timestep from the
-            # "right-to-left" direction
-            out_rnn = torch.cat((out_rnn[:, -1, :self.hidden_size], out_rnn[:, 0, self.hidden_size:]), dim=1)
-        else:
-            # last timestep
-            out_rnn = out_rnn[:, -1, :]
+        # convolutional layers (each followed by a maxpooling and a dropout layer)
+        x1 = self.dropout(self.maxpool(self.relu(self.cnn1d_1(x_1dcnn))))
+        x2 = self.dropout(self.maxpool(self.relu(self.cnn1d_2(x1))))
+        x3 = self.dropout(self.maxpool(self.relu(self.cnn1d_3(x2))))
 
-        # out_rnn shape: (batch_size, hidden_size*d) - ready to enter the fc layer
+        # initial hidden state for the GRU layer:
+        h_0 = torch.zeros(1, X.size(0), self.hidden_size).to(self.gpu_id)
+
+        # reshape output of the cnn layers to enter the GRU (batch_size, seq_length, num_feat)
+        x_resh = torch.reshape(x3, (batch_size, x3.size(2), x3.size(1)))
+
+        x4, _ = self.gru(x_resh, h_0)
+        # out_rnn shape: (batch_size, seq_length, hidden_size)
+
+        # decode the hidden state of the last timestep
+        out_rnn = x4[:, -1, :]
+        # out_rnn shape: (batch_size, hidden_size) - ready to enter the fc layer
+
         out_fc = self.fc(out_rnn)
         # out_fc shape: (batch_size, num_classes)
 
@@ -110,7 +118,7 @@ def evaluate(model, dataloader, part, gpu_id=None):
     X (batch_size, 1000, 3) : batch of examples
     y (batch_size,4): ground truth labels_train
     """
-    model.eval()
+    model.eval()   # set dropout and batch normalization layers to evaluation mode
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
@@ -157,7 +165,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-data', default=None,
                         help="Path to the dataset.")
-    parser.add_argument('-epochs', default=40, type=int,
+    parser.add_argument('-epochs', default=200, type=int,
                         help="""Number of epochs to train the model.""")
     parser.add_argument('-batch_size', default=512, type=int,
                         help="Size of training batch.")
@@ -169,9 +177,7 @@ def main():
     parser.add_argument('-gpu_id', type=int, default=None)
     parser.add_argument('-path_save_model', default=None,
                         help='Path to save the model')
-    parser.add_argument('-num_layers', type=int, default=2)
     parser.add_argument('-hidden_size', type=int, default=128)
-    parser.add_argument('-bidirectional', type=bool, default=False)
     opt = parser.parse_args()
 
     configure_seed(seed=42)
@@ -189,12 +195,10 @@ def main():
 
     input_size = 3
     hidden_size = opt.hidden_size
-    num_layers = opt.num_layers
     n_classes = 4
 
     # initialize the model
-    model = RNN(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id,
-                bidirectional=opt.bidirectional)
+    model = CNN1d_GRU(input_size, hidden_size, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id)
     model = model.to(opt.gpu_id)
 
     # get an optimizer
@@ -266,7 +270,7 @@ def main():
     HYP_sensi = matrix[3, 0] / (matrix[3, 0] + matrix[3, 1])
     HYP_spec = matrix[3, 3] / (matrix[3, 3] + matrix[3, 2])
 
-    # compute mean sensitivity and specificity:
+    # compute mean sensitivity and specificity
     mean_sensi = np.mean(matrix[:, 0]) / (np.mean(matrix[:, 0]) + np.mean(matrix[:, 1]))
     mean_spec = np.mean(matrix[:, 3]) / (np.mean(matrix[:, 3]) + np.mean(matrix[:, 2]))
 
@@ -276,7 +280,6 @@ def main():
           + '\n' + 'CD: sensitivity - ' + str(CD_sensi) + '; specificity - ' + str(CD_spec)
           + '\n' + 'HYP: sensitivity - ' + str(HYP_sensi) + '; specificity - ' + str(HYP_spec)
           + '\n' + 'mean: sensitivity - ' + str(mean_sensi) + '; specificity - ' + str(mean_spec))
-
 
     # plot
     plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss',
