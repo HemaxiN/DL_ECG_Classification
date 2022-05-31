@@ -13,7 +13,8 @@ import statistics
 import numpy as np
 import os
 
-#define a CNN based on the AlexNet model
+#define a CNN based on the AlexNet model, 
+# based on: https://medium.com/analytics-vidhya/alexnet-a-simple-implementation-using-pytorch-30c14e8b6db2 (visited on April 27, 2022)
 class AlexNet(nn.Module):
     def __init__(self, n_classes, **kwargs):
         """
