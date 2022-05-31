@@ -259,8 +259,8 @@ def main():
     test_dataset = FusionDataset(opt.signal_data, opt.image_data, [17111, 2156, 2163], part='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
-    dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
+    dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     model = EarlyFusionNet(4, sig_features, img_features, opt.hidden_size, opt.dropout,
                            sig_model, img_model, sig_hook, img_hook).to(opt.gpu_id)

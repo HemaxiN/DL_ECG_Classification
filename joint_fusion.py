@@ -90,7 +90,7 @@ def main():
     parser.add_argument('-optimizer', choices=['sgd', 'adam'], default='adam')
     parser.add_argument('-gpu_id', type=int, default=0)
     parser.add_argument('-path_save_model', default='save_models/', help='Path to save the model')
-    parser.add_argument('-hidden_size', type=int, default=128)
+    parser.add_argument('-hidden_size', type=int, default=256)
     opt = parser.parse_args()
     print(opt)
 
@@ -140,8 +140,8 @@ def main():
     test_dataset = early.FusionDataset(opt.signal_data, opt.image_data, [17111, 2156, 2163], part='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
-    dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
+    dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     model = JointFusionNet(4, sig_features, img_features, opt.hidden_size, opt.dropout,
                            sig_model, img_model).to(opt.gpu_id)
@@ -204,7 +204,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'early_lr_3max_model' + str(e.item())))
+                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'joint_256hl_model' + str(e.item())))
 
     # Results on test set:
     matrix = early.fusion_evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
