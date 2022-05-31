@@ -264,9 +264,6 @@ def main():
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
                        os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(e.item())))
-        elif sensitivity == np.max(valid_sensitivity):
-            torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model_val' + str(e.item())))
 
     # Results on test set:
     matrix = gru.evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
