@@ -14,7 +14,7 @@ import numpy as np
 import os
 
 #simple CNN for classification
-class CNN(nn.Module):
+class simplecnn(nn.Module):
     def __init__(self, n_classes, **kwargs):
         """
         Define the layers of the model
@@ -22,20 +22,21 @@ class CNN(nn.Module):
         Args:
             n_classes (int): Number of classes in our classification problem
         """
-        super(CNN, self).__init__()
-        nb_filters  = 16
+        super(simplecnn, self).__init__()
+        nb_filters = 16
         self.n_classes = n_classes
-        self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
+        self.conv2d_1 = nn.Conv2d(9,nb_filters,3) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
-        self.conv2d_2 = nn.Conv2d(nb_filters, nb_filters*2, 5, padding=1)
-        self.conv2d_3 = nn.Conv2d(nb_filters*2, nb_filters*2, 3, padding=1)
+        self.conv2d_2 = nn.Conv2d(nb_filters, nb_filters*2, 3, padding=1)
+        self.conv2d_3 = nn.Conv2d(nb_filters*2, nb_filters*4, 3, padding=1)
 
-        self.linear_1 = nn.Linear(111392, 2048)
+        self.linear_1 = nn.Linear(246016, 2048)
         self.linear_2 = nn.Linear(2048, 1024)
         self.linear_3 = nn.Linear(1024, n_classes)
         #nn.MaxPool2d(kernel_size)
         self.maxpool2d = nn.MaxPool2d(4, stride=2)
         self.relu = nn.ReLU()
+        self.dropout = nn.Dropout2d(0.3)
 
     def forward(self, X, **kwargs):
         """
@@ -49,9 +50,9 @@ class CNN(nn.Module):
         x2 = self.relu(self.conv2d_2(maxpool1))
         x3 = self.relu(self.conv2d_3(x2))
         maxpool2 = self.maxpool2d(x3)
-
+        maxpool2 = self.dropout(maxpool2)
         maxpool2 = maxpool2.reshape(maxpool2.shape[0],-1) #flatten (batch_size,)
-        x4 = self.relu(self.linear_1(maxpool2))
+        x4 = self.dropout(self.relu(self.linear_1(maxpool2)))
         x5 = self.relu(self.linear_2(x4))
         x6 = self.linear_3(x5)
         return x6
