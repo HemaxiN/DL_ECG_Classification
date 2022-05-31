@@ -147,7 +147,7 @@ def main():
     parser.add_argument('-image_data', default='Dataset/Images/', help="Path to the 2D image dataset.")
     parser.add_argument('-signal_model', default='gru', help="Description of the 1D ECG model.")
     parser.add_argument('-image_model', default='alexnet', help="Description of the 2D image model.")
-    parser.add_argument('-epochs', default=50, type=int, help="""Number of epochs to train the model.""")
+    parser.add_argument('-epochs', default=10, type=int, help="""Number of epochs to train the model.""")
     parser.add_argument('-batch_size', default=256, type=int, help="Size of training batch.")
     parser.add_argument('-learning_rate', type=float, default=0.01)
     parser.add_argument('-dropout', type=float, default=0.3)
@@ -199,9 +199,9 @@ def main():
     train_dataset = LateFusionDataset(opt.signal_data, opt.image_data, sig_model, img_model, sig_type, img_type,
                                       [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='train')
     dev_dataset = LateFusionDataset(opt.signal_data, opt.image_data, sig_model, img_model, sig_type, img_type,
-                                      [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='dev')
+                                    [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='dev')
     test_dataset = LateFusionDataset(opt.signal_data, opt.image_data, sig_model, img_model, sig_type, img_type,
-                                      [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='test')
+                                     [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
@@ -263,7 +263,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(e.item())))
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'late_model' + str(e.item())))
 
     # Results on test set:
     matrix = gru.evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
@@ -291,11 +291,14 @@ def main():
 
     # plot
     plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss',
-                name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+                name='training-validation-loss-late-{}-{}-{}-{}-{}-{}'.format(
+             opt.learning_rate, opt.optimizer, opt.dropout, opt.epochs, opt.hidden_size, opt.batch_size))
     plot(epochs, valid_specificity, ylabel='Specificity',
-         name='validation-specificity-{}-{}'.format(opt.learning_rate, opt.optimizer))
+         name='validation-specificity-late-{}-{}-{}-{}-{}-{}'.format(
+             opt.learning_rate, opt.optimizer, opt.dropout, opt.epochs, opt.hidden_size, opt.batch_size))
     plot(epochs, valid_sensitivity, ylabel='Sensitivity',
-         name='validation-sensitivity-{}-{}'.format(opt.learning_rate, opt.optimizer))
+         name='validation-sensitivity-late-{}-{}-{}-{}-{}-{}'.format(
+             opt.learning_rate, opt.optimizer, opt.dropout, opt.epochs, opt.hidden_size, opt.batch_size))
 
 
 if __name__ == '__main__':

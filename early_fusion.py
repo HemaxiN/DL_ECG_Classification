@@ -323,7 +323,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'early_model' + str(e.item())))
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'early_model' + str(e.item())))
 
     # Results on test set:
     matrix = fusion_evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
