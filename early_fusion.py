@@ -259,8 +259,8 @@ def main():
     test_dataset = FusionDataset(opt.signal_data, opt.image_data, [17111, 2156, 2163], part='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
-    dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
 
     model = EarlyFusionNet(4, sig_features, img_features, opt.hidden_size, opt.dropout,
                            sig_model, img_model, sig_hook, img_hook).to(opt.gpu_id)
@@ -323,7 +323,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'early_model' + str(e.item())))
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'early_model' + str(e.item())))
 
     # Results on test set:
     matrix = fusion_evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)

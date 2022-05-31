@@ -204,8 +204,8 @@ def main():
                                      [17111, 2156, 2163], opt.gpu_id, opt.batch_size, part='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
-    dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    dev_dataloader = DataLoader(dev_dataset, batch_size=opt.batch_size, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=False)
 
     model = LateFusionNet(4, 8, opt.hidden_size, opt.dropout).to(opt.gpu_id)
 
@@ -263,7 +263,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
-                       os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'late_model' + str(e.item())))
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'late_model' + str(e.item())))
 
     # Results on test set:
     matrix = gru.evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
