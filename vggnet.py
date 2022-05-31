@@ -18,22 +18,16 @@ from torch.nn import functional as F
 class VGG16(nn.Module):
     def __init__(self, n_classes, **kwargs):
         super(VGG16, self).__init__()
-
         self.n_classes = n_classes
-
         n_filters = 16
         self.conv1_1 = nn.Conv2d(9, n_filters, 3, padding=1)
         self.conv1_2 = nn.Conv2d(n_filters, n_filters, 3, padding=1)
-
         self.conv2_1 = nn.Conv2d(n_filters, n_filters*2, 3, padding=1)
         self.conv2_2 = nn.Conv2d(n_filters*2, n_filters*2, 3, padding=1)
-
         self.conv3_1 = nn.Conv2d(n_filters*2, n_filters*4, 3, padding=1)
         self.conv3_2 = nn.Conv2d(n_filters*4, n_filters*4, 3, padding=1)
         self.conv3_3 = nn.Conv2d(n_filters*4, n_filters*4,3, padding=1)
-
         self.maxpool = nn.MaxPool2d(2, stride=2)
-
         self.fc1 = nn.Linear(65536, 4096)
         self.fc2 = nn.Linear(4096, 4096)
         self.fc3 = nn.Linear(4096, self.n_classes)
