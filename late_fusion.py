@@ -22,6 +22,7 @@ import resnet as resnet
 
 from datetime import datetime
 import os
+from count_parameters import count_parameters
 
 
 def modalities_evaluate(model, dataloader, gpu_id=None):
@@ -147,15 +148,15 @@ def main():
     parser.add_argument('-image_data', default='Dataset/Images/', help="Path to the 2D image dataset.")
     parser.add_argument('-signal_model', default='gru', help="Description of the 1D ECG model.")
     parser.add_argument('-image_model', default='alexnet', help="Description of the 2D image model.")
-    parser.add_argument('-epochs', default=10, type=int, help="""Number of epochs to train the model.""")
-    parser.add_argument('-batch_size', default=256, type=int, help="Size of training batch.")
-    parser.add_argument('-learning_rate', type=float, default=0.01)
-    parser.add_argument('-dropout', type=float, default=0.3)
+    parser.add_argument('-epochs', default=50, type=int, help="""Number of epochs to train the model.""")
+    parser.add_argument('-batch_size', default=64, type=int, help="Size of training batch.")
+    parser.add_argument('-learning_rate', type=float, default=0.1)
+    parser.add_argument('-dropout', type=float, default=0.0)
     parser.add_argument('-l2_decay', type=float, default=0)
     parser.add_argument('-optimizer', choices=['sgd', 'adam'], default='adam')
     parser.add_argument('-gpu_id', type=int, default=0)
     parser.add_argument('-path_save_model', default='save_models/', help='Path to save the model')
-    parser.add_argument('-hidden_size', type=int, default=64)
+    parser.add_argument('-hidden_size', type=int, default=16)
     opt = parser.parse_args()
     print(opt)
 
@@ -228,6 +229,8 @@ def main():
     criterion = nn.BCEWithLogitsLoss(
         pos_weight=class_weights)  # https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
+
+    count_parameters(model)
 
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)

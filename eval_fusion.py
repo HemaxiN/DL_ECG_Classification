@@ -8,29 +8,33 @@ import late_fusion as late
 import early_fusion as early
 import joint_fusion as joint
 
+from count_parameters import count_parameters
+
 type = ['late', 'early', 'joint'][2]
 
 batch_size = 64
-hidden_size = 256
-dropout = 0.3
+hidden_size = 512
+dropout = 0.5
 # path_weights = "save_models/1654007792.211898late_model9"
 # path_weights = "save_models/1654009322early_model2"
-path_weights = "save_models/1654008252.033359joint_256hl_model1"
+path_weights = "save_models/joint_model"
+sig_path = "save_models/joint_model_sig"
+img_path = "save_models/joint_model_img"
+
+# sig_path = "best_trained_rnns/gru_3lay_128hu"
+# img_path = "Models/alexnet"
 
 gpu_id = 0
 
 sig_data = "Dataset/data_for_rnn/"
-sig_path = "best_trained_rnns/gru_3lay_128hu"
 sig_model = gru.RNN(3, 128, 3, 4, .3, gpu_id=gpu_id, bidirectional=False).to(gpu_id)
 
 img_data = "Dataset/Images/"
-img_path = "Models/alexnet"
 img_model = alexnet.AlexNet(4).to(gpu_id)
 
-sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
-img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
-
 if type == 'late':
+    sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
+    img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
     sig_model.eval()
     img_model.eval()
 
@@ -40,6 +44,8 @@ if type == 'late':
     model = late.LateFusionNet(4, 8, hidden_size, dropout).to(gpu_id)
 
 elif type == 'early':
+    sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
+    img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
     sig_model.eval()
     img_model.eval()
 
@@ -56,6 +62,8 @@ elif type == 'early':
 else:  # joint fusion
     sig_model.fc = joint.Identity()
     img_model.linear_3 = joint.Identity()
+    sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
+    img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
 
     test_dataset = early.FusionDataset(sig_data, img_data, [17111, 2156, 2163], part='test')
 
@@ -72,6 +80,9 @@ if type == 'late':
     matrix = gru.evaluate(model, test_dataloader, 'test', gpu_id=gpu_id)
 else:
     matrix = early.fusion_evaluate(model, test_dataloader, 'test', gpu_id=gpu_id)
+
+count_parameters(model)
+
 
 MI_sensi = matrix[0, 0] / (matrix[0, 0] + matrix[0, 1])
 MI_spec = matrix[0, 3] / (matrix[0, 3] + matrix[0, 2])

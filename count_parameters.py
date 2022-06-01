@@ -26,20 +26,20 @@ gpu_id = None
 device = 'cpu'
 
 # LSTM
-model_lstm = LSTM(input_size=3, hidden_size=128, num_layers=2, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
-                  bidirectional=False)
-model_lstm.load_state_dict(torch.load('best_trained_rnns/lstm_2lay_128hu', map_location=torch.device(device)))
-
-# 1D-CNN + LSTM
-model_cnn_lstm = CNN1d_LSTM(input_size=3, hidden_size=128, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id)
-model_cnn_lstm.load_state_dict(torch.load('best_trained_rnns/cnn_lstm_128hu', map_location=torch.device(device)))
-
-# GRU
-model_gru = RNN(3, hidden_size=128, num_layers=3, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
-                bidirectional=False)
-model_gru.load_state_dict(torch.load('best_trained_rnns/gru_3lay_128hu', map_location=torch.device(device)))
-
-count_parameters(model_lstm)
-count_parameters(model_gru)
-count_parameters(model_cnn_lstm)
+# model_lstm = LSTM(input_size=3, hidden_size=128, num_layers=2, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
+#                   bidirectional=False)
+# model_lstm.load_state_dict(torch.load('best_trained_rnns/lstm_2lay_128hu', map_location=torch.device(device)))
+#
+# # 1D-CNN + LSTM
+# model_cnn_lstm = CNN1d_LSTM(input_size=3, hidden_size=128, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id)
+# model_cnn_lstm.load_state_dict(torch.load('best_trained_rnns/cnn_lstm_128hu', map_location=torch.device(device)))
+#
+# # GRU
+# model_gru = RNN(3, hidden_size=128, num_layers=3, n_classes=4, dropout_rate=0.3, gpu_id=gpu_id,
+#                 bidirectional=False)
+# model_gru.load_state_dict(torch.load('best_trained_rnns/gru_3lay_128hu', map_location=torch.device(device)))
+#
+# count_parameters(model_lstm)
+# count_parameters(model_gru)
+# count_parameters(model_cnn_lstm)
 

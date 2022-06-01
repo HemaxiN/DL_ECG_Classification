@@ -25,7 +25,7 @@ import resnet as resnet
 from datetime import datetime
 import os
 import early_fusion as early
-
+from count_parameters import count_parameters
 
 class JointFusionNet(nn.Module):
     def __init__(self, n_classes, sig_features, img_features, hidden_size, dropout, sig_model, img_model):
@@ -41,9 +41,9 @@ class JointFusionNet(nn.Module):
         self.sig_model = sig_model
         self.img_model = img_model
 
-        self.fc_img = nn.Linear(img_features, sig_features)
+        self.fc_img = nn.Linear(img_features, sig_features * 3)
 
-        self.fc1 = nn.Linear(sig_features * 2, hidden_size * 2)
+        self.fc1 = nn.Linear(sig_features * 4, hidden_size * 2)
         self.fc2 = nn.Linear(hidden_size * 2, hidden_size)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=dropout)
@@ -82,15 +82,15 @@ def main():
     parser.add_argument('-image_data', default='Dataset/Images/', help="Path to the 2D image dataset.")
     parser.add_argument('-signal_model', default='gru', help="Description of the 1D ECG model.")
     parser.add_argument('-image_model', default='alexnet', help="Description of the 2D image model.")
-    parser.add_argument('-epochs', default=25, type=int, help="""Number of epochs to train the model.""")
+    parser.add_argument('-epochs', default=50, type=int, help="""Number of epochs to train the model.""")
     parser.add_argument('-batch_size', default=64, type=int, help="Size of training batch.")
-    parser.add_argument('-learning_rate', type=float, default=0.01)
-    parser.add_argument('-dropout', type=float, default=0.3)
-    parser.add_argument('-l2_decay', type=float, default=0)
+    parser.add_argument('-learning_rate', type=float, default=0.0001)
+    parser.add_argument('-dropout', type=float, default=0.5)
+    parser.add_argument('-l2_decay', type=float, default=0.001)
     parser.add_argument('-optimizer', choices=['sgd', 'adam'], default='adam')
     parser.add_argument('-gpu_id', type=int, default=0)
-    parser.add_argument('-path_save_model', default='save_models/', help='Path to save the model')
-    parser.add_argument('-hidden_size', type=int, default=256)
+    parser.add_argument('-path_save_model', default='save_models/sgdl2', help='Path to save the model')
+    parser.add_argument('-hidden_size', type=int, default=512)
     opt = parser.parse_args()
     print(opt)
 
@@ -166,6 +166,8 @@ def main():
     # https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
 
+    count_parameters(model)
+
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
     train_mean_losses = []
@@ -188,7 +190,7 @@ def main():
             train_losses.append(loss)
 
         mean_loss = torch.tensor(train_losses).mean().item()
-        print('Training loss: %.4f' % (mean_loss))
+        print('\tTraining loss: %.4f' % (mean_loss))
 
         train_mean_losses.append(mean_loss)
         sensitivity, specificity = early.fusion_evaluate(model, dev_dataloader, 'dev', gpu_id=opt.gpu_id)
@@ -196,8 +198,9 @@ def main():
         valid_mean_losses.append(val_loss)
         valid_sensitivity.append(sensitivity)
         valid_specificity.append(specificity)
-        print('Valid specificity: %.4f' % (valid_specificity[-1]))
-        print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
+        print('\t\tValid loss: %.4f' % (val_loss))
+        print('\t\tValid specificity: %.4f' % (valid_specificity[-1]))
+        print('\t\tValid sensitivity: %.4f' % (valid_sensitivity[-1]))
 
         dt = datetime.now()
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
@@ -205,6 +208,10 @@ def main():
         if val_loss == np.min(valid_mean_losses):
             torch.save(model.state_dict(),
                        os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'joint_model' + str(e.item())))
+            torch.save(sig_model.state_dict(),
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'joint_model_sig' + str(e.item())))
+            torch.save(img_model.state_dict(),
+                       os.path.join(opt.path_save_model, str(int(datetime.timestamp(dt))) + 'joint_model_img' + str(e.item())))
 
     # Results on test set:
     matrix = early.fusion_evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id)
