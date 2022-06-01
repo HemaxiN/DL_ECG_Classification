@@ -42,7 +42,7 @@ To train the model use the following command (selecting the model ```AlexNet.py`
 python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  
 ```
 
-![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/cnn_conf.png)
+![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/cnn_conf2.png)
 
 The models that we trained are available [here](https://drive.google.com/drive/folders/12LVLYfjd2N4mTuMwAmtJ6wOwm3y9HWAT?usp=sharing), (alexnet, resnet, vggnet and customcnn denote respectively the best AlexNet, ResNet, VGGNet and custom CNN models based on their performance on the validation set).
 
