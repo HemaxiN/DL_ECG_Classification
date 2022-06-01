@@ -13,7 +13,7 @@ Examples of the ECG signal obtained with leads I, II and V2 for the ECG record 1
 
 
 
-# Image Sub-Net: CNN based on the AlexNet Model for ECG classification
+# Image Sub-Net: CNNs for ECG classification
 
 Examples of GAF (left), MTF (middle) and RP (right) images for the ECG record 17110 (with ground truth label NORM), corresponding to leads I, II and V2:
 
@@ -44,7 +44,7 @@ python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_sav
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/cnn_conf.png)
 
-The models that we trained are available [here](https://drive.google.com/drive/folders/12LVLYfjd2N4mTuMwAmtJ6wOwm3y9HWAT?usp=sharing), (alexnet and resnet denote respectively the best alexnet and resnet models based on their performance on the validation set).
+The models that we trained are available [here](https://drive.google.com/drive/folders/12LVLYfjd2N4mTuMwAmtJ6wOwm3y9HWAT?usp=sharing), (alexnet, resnet, vggnet and customcnn denote respectively the best AlexNet, ResNet, VGGNet and custom CNN models based on their performance on the validation set).
 
 Configuration of the CNN based on the AlexNet model. nb_filters denotes the number of filters in the first layer used to compute the number of filters in the following layers; batch denotes the batch size:
 ```
