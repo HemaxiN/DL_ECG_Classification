@@ -235,7 +235,7 @@ def main():
     # get a loss criterion and compute the class weights (nbnegative/nbpositive)
     # according to the comments https://discuss.pytorch.org/t/weighted-binary-cross-entropy/51156/6
     # and https://discuss.pytorch.org/t/multi-label-multi-class-class-imbalance/37573/2
-    class_weights=torch.tensor([9528/5486, 9528/5250, 9528/4907, 9528/2655],dtype=torch.float)  
+    class_weights=torch.tensor([17111/4389, 17111/3136, 17111/1915, 17111/417],dtype=torch.float)  
     class_weights = class_weights.to(opt.gpu_id)
     criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights) #https://learnopencv.com/multi-label-image-classification-with-pytorch-image-tagging/
     # https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html
