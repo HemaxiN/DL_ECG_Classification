@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
-import cv2
-import os
+# import cv2
+# import os
 import tifffile
 
 
@@ -39,7 +39,7 @@ def plot_losses(epochs, valid_losses, train_losses, ylabel ='', name=''):
     plt.plot(epochs, valid_losses, label='validation')
     plt.plot(epochs, train_losses, label='train')
     plt.legend()
-    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig('results/' + '%s.pdf' % (name), bbox_inches='tight')
 
 #create a generator to read the images as we train the model
 #(similar to flow_from_directory Keras)
