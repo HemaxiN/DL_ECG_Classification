@@ -277,6 +277,7 @@ def main():
         # save the model at each epoch where the validation loss is the best so far
         if val_loss == np.min(valid_mean_losses):
             f = os.path.join(opt.path_save_model, str(datetime.timestamp(dt)) + 'model' + str(ii.item()))
+            best_model = ii
             torch.save(model.state_dict(), f)
 
         # early stop - if validation loss does not increase for 15 epochs, stop learning process
@@ -319,7 +320,7 @@ def main():
           + '\n' + 'mean: sensitivity - ' + str(mean_sensi) + '; specificity - ' + str(mean_spec))
 
     dt = datetime.now()
-    with open('results/' + 'model' + str(epochs_run) + '_' + str(datetime.timestamp(dt)) + '.txt', 'w') as f:
+    with open('results/' + 'model' + str(best_model.item()) + '_' + str(datetime.timestamp(dt)) + '.txt', 'w') as f:
         print('Final Test Results: \n ' + str(matrix) + '\n' + 'MI: sensitivity - ' + str(MI_sensi) + '; specificity - '
               + str(MI_spec) + '\n' + 'STTC: sensitivity - ' + str(STTC_sensi) + '; specificity - ' + str(STTC_spec)
               + '\n' + 'CD: sensitivity - ' + str(CD_sensi) + '; specificity - ' + str(CD_spec)
