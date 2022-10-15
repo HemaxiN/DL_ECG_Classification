@@ -13,6 +13,8 @@ import statistics
 import numpy as np
 import os
 
+from sklearn.metrics import roc_curve
+
 #define a CNN based on the AlexNet model, 
 # based on: https://medium.com/analytics-vidhya/alexnet-a-simple-implementation-using-pytorch-30c14e8b6db2 (visited on April 27, 2022)
 class AlexNet(nn.Module):
@@ -251,13 +253,13 @@ def main():
         print('Training loss: %.4f' % (mean_loss))
 
         train_mean_losses.append(mean_loss)
-        sensitivity, specificity = evaluate(model, dev_dataloader, 'dev', gpu_id=opt.gpu_id)
+        #sensitivity, specificity = evaluate(model, dev_dataloader, 'dev', gpu_id=opt.gpu_id)
         val_loss = compute_loss(model, dev_dataloader, criterion, gpu_id=opt.gpu_id)
         valid_mean_losses.append(val_loss)
-        valid_sensitivity.append(sensitivity)
-        valid_specificity.append(specificity)
-        print('Valid specificity: %.4f' % (valid_specificity[-1]))
-        print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
+        #valid_sensitivity.append(sensitivity)
+        #valid_specificity.append(specificity)
+        #print('Valid specificity: %.4f' % (valid_specificity[-1]))
+        #print('Valid sensitivity: %.4f' % (valid_sensitivity[-1]))
         
         if val_loss<last_valid_loss:
             #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the best model based on the validation loss)
@@ -267,10 +269,15 @@ def main():
         else:
         	patience_count += 1            
 
+        if patience_count==20:
+        	plot_losses(epochs_plot, valid_mean_losses, train_mean_losses, ylabel='Loss', name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+        	break            
+            
+            
     print('Final Test Results:')
     print(evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id))
     # plot
-    plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss', name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
+    plot_losses(epochs_plot, valid_mean_losses, train_mean_losses, ylabel='Loss', name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
 
 if __name__ == '__main__':
     main()
