@@ -130,6 +130,44 @@ def compute_loss(model, dataloader, criterion, gpu_id=None):
         model.train()
         return statistics.mean(val_losses)
 
+def threshold_optimization(model, dataloader, gpu_id=None):
+    """
+    Make labels_train predictions for "X" (batch_size, 1000, 3)
+    """
+    model.eval()
+    with torch.no_grad():
+        threshold_opt = np.zeros(4)
+        for _, (X, Y) in enumerate(dataloader):
+            X, Y = X.to(gpu_id), Y.to(gpu_id)
+
+            Y = np.array(Y.cpu())
+            #print(Y)
+
+            logits_ = model(X)  # (batch_size, n_classes)
+            probabilities = torch.sigmoid(logits_).cpu()
+
+            # find the optimal threshold with ROC curve for each disease
+
+            for dis in range(0, 4):
+                # print(probabilities[:, dis])
+                # print(Y[:, dis])
+                fpr, tpr, thresholds = roc_curve(Y[:, dis], probabilities[:, dis])
+                #print('opt')
+                #print(thresholds)
+                # weighted mean of sensitivity and specificity
+                gmean = (9857/17111)*tpr+(7254/17111)*(1-fpr)
+
+                #remove first element
+                thresholds = thresholds[1:]
+                gmean = gmean[1:]
+
+                # optimal threshold
+                index = np.argmax(gmean)
+                threshold_opt[dis] = round(thresholds[index], ndigits=2)
+
+    return threshold_opt    
+    
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-data', default=None,
