@@ -154,7 +154,7 @@ def threshold_optimization(model, dataloader, gpu_id=None):
                 fpr, tpr, thresholds = roc_curve(Y[:, dis], probabilities[:, dis])
                 #print('opt')
                 #print(thresholds)
-                # weighted mean of sensitivity and specificity
+                # weighted mean of sensitivity and specificity (using the number of samples)
                 gmean = (9857/17111)*tpr+(7254/17111)*(1-fpr)
 
                 #remove first element
