@@ -78,40 +78,39 @@ def train_batch(X, y, model, optimizer, criterion, gpu_id=None, **kwargs):
     optimizer.step()
     return loss.item()
 
-def predict(model, X):
+def predict(model, X, thr):
     """
-    Make label predictions for "X" (batch_size, 9, 256,256) 
-    given the trained model "model"
+    Make labels_train predictions for "X" (batch_size, 1000, 3)
     """
-    logits_ = model(X) # (batch_size, n_classes
+    logits_ = model(X)  # (batch_size, n_classes)
     probabilities = torch.sigmoid(logits_).cpu()
-    pred_labels = np.array(probabilities>0.5, dtype=float) # (batch_size, n_classes)
+    pred_labels = np.array(probabilities.numpy() > thr, dtype=float)  # (batch_size, n_classes)
     return pred_labels
 
-def evaluate(model,dataloader, part, gpu_id=None):
+def evaluate(model, dataloader, thr, gpu_id=None):
     """
     model: Pytorch model
-    X (batch_size, 9, 1000, 1000) : batch of examples
-    y (batch_size,4): ground truth labels
+    X (batch_size, 1000, 3) : batch of examples
+    y (batch_size,4): ground truth labels_train
     """
-    model.eval()
+    model.eval()  # set dropout and batch normalization layers to evaluation mode
     with torch.no_grad():
-        matrix = np.zeros((4,4))
+        matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
             print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
-            y_pred = predict(model, x_batch)
+            y_pred = predict(model, x_batch, thr)
             y_true = np.array(y_batch.cpu())
-            matrix = compute_scores(y_true,y_pred, matrix)
-            #delete unnecessary variables due to memory issues
+            matrix = compute_scores(y_true, y_pred, matrix)
+
             del x_batch
             del y_batch
             torch.cuda.empty_cache()
+
         model.train()
-    if part == 'dev':
-        return compute_scores_dev(matrix)
-    if part == 'test':
-        return matrix
+
+    return matrix
+    # cols: TP, FN, FP, TN
 
 def compute_loss(model, dataloader, criterion, gpu_id=None):
     #compute the validation loss at the end of each epoch
@@ -196,8 +195,11 @@ def main():
     valid_sensitivity = []
     train_losses = []
     last_valid_loss = 100000
+    patience_count = 0
+    epochs_plot = []    
     for ii in epochs:
         print('Training epoch {}'.format(ii))
+        epochs_plot.append(ii)        
         for i, (X_batch, y_batch) in enumerate(train_dataloader):
             print('{} of {}'.format(i + 1, len(train_dataloader)), end='\r', flush=True)
             loss = train_batch(
@@ -223,13 +225,14 @@ def main():
             #https://pytorch.org/tutorials/beginner/saving_loading_models.html (save the best model based on the validation loss)
             torch.save(model.state_dict(), os.path.join(opt.path_save_model, 'model'+ str(ii.item())))
             last_valid_loss = val_loss
+            patience_count = 0
+        else:
+        	patience_count += 1            
 
     print('Final Test Results:')
     print(evaluate(model, test_dataloader, 'test', gpu_id=opt.gpu_id))
     # plot
     plot_losses(epochs, valid_mean_losses, train_mean_losses, ylabel='Loss', name='training-validation-loss-{}-{}'.format(opt.learning_rate, opt.optimizer))
-    plot(epochs, valid_specificity, ylabel='Specificity', name='validation-specificity-{}-{}'.format(opt.learning_rate, opt.optimizer))
-    plot(epochs, valid_sensitivity, ylabel='Sensitivity', name='validation-sensitivity-{}-{}'.format(opt.learning_rate, opt.optimizer))
 
 if __name__ == '__main__':
     main()
