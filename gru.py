@@ -217,7 +217,7 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-    dev_dataloader_thr = DataLoader(dev_dataset, batch_size=2156, shuffle=False)
+    dev_dataloader_thr = DataLoader(dev_dataset, batch_size=1024, shuffle=False)
 
     input_size = 3
     hidden_size = opt.hidden_size

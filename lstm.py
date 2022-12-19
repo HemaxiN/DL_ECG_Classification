@@ -60,7 +60,7 @@ class LSTM(nn.Module):
         h_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
         c_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
 
-        out_rnn, _ = self.lstm(X, (h_0, c_0))
+        out_rnn, _ = self.lstm(X.to(self.gpu_id), (h_0, c_0))
         # out_rnn shape: (batch_size, seq_length, hidden_size*d) = (batch_size, 1000, hidden_size*d)
 
         if self.bidirectional:
@@ -203,6 +203,8 @@ def main():
     parser.add_argument('-bidirectional', type=bool, default=False)
     parser.add_argument('-early_stop', type=bool, default=True)
     parser.add_argument('-patience', type=int, default=20)
+    parser.add_argument('-thr_batch', default=1024, type=int,
+                        help="Size of threshold optimization batch.")
     opt = parser.parse_args()
 
     configure_seed(seed=42)
@@ -217,7 +219,7 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-    dev_dataloader_thr = DataLoader(dev_dataset, batch_size=2156, shuffle=False)
+    dev_dataloader_thr = DataLoader(dev_dataset, batch_size=opt.thr_batch, shuffle=False)
 
     input_size = 3
     hidden_size = opt.hidden_size
