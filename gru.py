@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN, \
+from utils import configure_seed, configure_device, compute_scores, Dataset_for_RNN, \
     plot_losses
 
 from datetime import datetime
@@ -101,8 +101,11 @@ def predict(model, X, thr):
     """
     logits_ = model(X)  # (batch_size, n_classes)
     probabilities = torch.sigmoid(logits_).cpu()
-    pred_labels = np.array(probabilities.numpy() > thr, dtype=float)  # (batch_size, n_classes)
-    return pred_labels
+
+    if thr is None:
+        return probabilities
+    else:
+        return np.array(probabilities.numpy() >= thr, dtype=float)
 
 
 def evaluate(model, dataloader, thr, gpu_id=None):

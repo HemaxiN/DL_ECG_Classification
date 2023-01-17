@@ -1,0 +1,48 @@
+Epoch 6
+
+Final Results
+
+Threshold: [0.5914 0.4986 0.682  0.8376]
+
+Development/Validation
+MI
+	Sensitivity: 0.7591911764705882
+	Specificity: 0.8238213399503722
+
+STTC
+	Sensitivity: 0.8951310861423221
+	Specificity: 0.7570900123304563
+
+CD
+	Sensitivity: 0.8350100603621731
+	Specificity: 0.840867992766727
+
+HYP
+	Sensitivity: 0.7269372693726938
+	Specificity: 0.6997347480106101
+
+Mean
+	Sensitivity: 0.814192849404117
+	Specificity: 0.7775154912953673
+
+
+Test
+MI
+	Sensitivity: 0.759493670886076
+	Specificity: 0.8316770186335404
+
+STTC
+	Sensitivity: 0.8680688336520076
+	Specificity: 0.7676829268292683
+
+CD
+	Sensitivity: 0.8192771084337349
+	Specificity: 0.8336336336336336
+
+HYP
+	Sensitivity: 0.7224334600760456
+	Specificity: 0.7073684210526315
+
+Mean
+	Sensitivity: 0.8013064779531845
+	Specificity: 0.7820983125458547
