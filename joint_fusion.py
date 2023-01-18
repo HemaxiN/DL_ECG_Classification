@@ -128,7 +128,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     dev_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='dev')
     test_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='test')
 
-    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
@@ -193,7 +193,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         print('\tTraining loss: %.4f' % (mean_loss))
 
         train_mean_losses.append(mean_loss)
-        val_loss = early.fusion_compute_loss(model, dev_dataloader, criterion, gpu_id=opt.gpu_id)
+        val_loss = early.fusion_compute_loss(model, dev_dataloader, criterion, gpu_id=gpu_id)
         print('\t\tValid loss: %.4f' % (val_loss))
 
         valid_mean_losses.append(val_loss)
