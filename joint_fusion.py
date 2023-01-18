@@ -92,7 +92,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         sig_model = gru.RNN(3, hidden_size_, num_layers, 4, dropout_rate, gpu_id=gpu_id,
                             bidirectional=False).to(gpu_id)
     elif sig_type == 'bigru':
-        sig_path = 'save_models/grubi_dropout05_lr0005_model5'
+        sig_path = 'net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/grubi_dropout05_lr0005_model5'
         hidden_size_ = 128
         num_layers = 2
         dropout_rate = 0.5
@@ -103,7 +103,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         raise ValueError('1D model is not defined.')
 
     if img_type == 'alexnet':
-        img_path = 'save_models/alexnet'
+        img_path = 'net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/alexnet'
         img_model = alexnet.AlexNet(4).to(gpu_id)
 
     elif img_type == 'resnet':
@@ -239,11 +239,11 @@ def main():
     parser.add_argument('-image_data', default='Dataset/Images/', help="Path to the 2D image dataset.")
     parser.add_argument('-signal_model', default='bigru', help="Description of the 1D ECG model.")
     parser.add_argument('-image_model', default='alexnet', help="Description of the 2D image model.")
-    parser.add_argument('-epochs', default=200, type=int, help="""Number of epochs to train the model.""")
+    parser.add_argument('-epochs', default=1, type=int, help="""Number of epochs to train the model.""")
     parser.add_argument('-batch_size', default=64, type=int, help="Size of training batch.")
     parser.add_argument('-learning_rate', type=float, default=0.1)
     parser.add_argument('-dropout', type=float, default=0.5)
-    parser.add_argument('-l2_decay', type=float, default=0.001)
+    parser.add_argument('-l2_decay', type=float, default=0.01)
     parser.add_argument('-optimizer', choices=['sgd', 'adam'], default='adam')
     parser.add_argument('-gpu_id', type=int, default=0)
     parser.add_argument('-path_save_model', default='save_models/paper_results/', help='Path to save the model')
