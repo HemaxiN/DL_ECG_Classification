@@ -244,8 +244,8 @@ def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strateg
 
     with open(
         "{}{}{}_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}.txt".format(
-            test_id,
             path_save_model,
+            test_id,
             strategy,
             date,
             epoch.item(),

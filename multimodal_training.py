@@ -1,8 +1,17 @@
 import pandas as pd
 
+from logger import FhpLogger
 from late_fusion import training_late
 from early_fusion import training_early
 from joint_fusion import training_joint
+
+fhplog = FhpLogger(
+    config_file_path="~/Desktop/zuliprc",
+    user_id="ricardo.santos@aicos.fraunhofer.pt",
+    to=["Logging-RicardoSantos"],
+    msg_type="stream",
+    topic="default",
+)
 
 
 def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
@@ -21,22 +30,14 @@ def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_dat
                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
 
 
-if __name__ == "__main__":
+@fhplog.train_logger
+def iterator(tests):
 
-    tests = pd.read_csv("multimodal_tests_t.csv", delimiter=";", decimal=",")
+    total = len(tests)
 
-    gpu_id = 0
-    sig_type = 'bigru'
-    img_type = 'alexnet'
-    signal_data = 'net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/data_for_rnn/'
-    image_data = 'net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
-    epochs = 200
-    path_save_model = 'save_models/paper_results/'
-    patience = 10
-    early_stop = True
-
+    fhplog.send_message("Starting")
     for idx, row in tests.iterrows():
-
+        fhplog.send_message("Starting Test ID: {} | Iteration{}/{}".format(row["test_id"], idx + 1, total))
         print(row.to_dict())
 
         strategy = row["strategy"]
@@ -50,5 +51,27 @@ if __name__ == "__main__":
 
         central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
                         optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
+
+
+if __name__ == "__main__":
+
+    tests = pd.read_csv("multimodal_tests_t.csv", delimiter=";", decimal=",")
+    tests = tests.sample(frac=1).reset_index(drop=True)
+
+    gpu_id = 0
+    sig_type = 'bigru'
+    img_type = 'alexnet'
+    #signal_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/data_for_rnn/'
+    signal_data = 'Dataset/data_for_rnn/'
+    image_data = 'Dataset/Images/'
+    #image_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
+    epochs = 1
+    path_save_model = 'save_models/paper_results/'
+    patience = 10
+    early_stop = True
+
+    iterator(tests)
+
+
 
 
