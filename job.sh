@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=pipeline_ecg
-#SBATCH --output=my-output.log
-#SBATCH --mem=16G
+#SBATCH --job-name=early_pipeline_ecg
+#SBATCH --output=late-output.log
+#SBATCH --mem=32G
 # SBATCH --time=3-00:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus=1

@@ -6,7 +6,8 @@ from early_fusion import training_early
 from joint_fusion import training_joint
 
 fhplog = FhpLogger(
-    config_file_path="~/Desktop/zuliprc",
+    config_file_path="~/zuliprc",
+    #config_file_path="~/Desktop/zuliprc",
     user_id="ricardo.santos@aicos.fraunhofer.pt",
     to=["Logging-RicardoSantos"],
     msg_type="stream",
@@ -56,7 +57,7 @@ def iterator(tests):
 
 if __name__ == "__main__":
 
-    tests = pd.read_csv("multimodal_tests_t.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("multimodal_tests.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     # signal_data = 'Dataset/data_for_rnn/'
     # image_data = 'Dataset/Images/'
     image_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
-    epochs = 1
+    epochs = 200
     path_save_model = 'save_models/paper_results/'
     patience = 10
     early_stop = True
