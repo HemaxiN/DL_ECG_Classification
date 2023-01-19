@@ -155,7 +155,7 @@ def fusion_evaluate(model, dataloader, thr, gpu_id=None):
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             X_sig_batch, X_img_batch, y_batch = X_sig_batch.to(gpu_id), X_img_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = fusion_predict(model, X_sig_batch, X_img_batch, thr)
             y_true = np.array(y_batch.cpu())
@@ -178,7 +178,7 @@ def fusion_compute_loss(model, dataloader, criterion, gpu_id=None):
     with torch.no_grad():
         val_losses = []
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             X_sig_batch, X_img_batch, y_batch = X_sig_batch.to(gpu_id), X_img_batch.to(gpu_id), y_batch.to(gpu_id)
             logits_ = model(X_sig_batch, X_img_batch)
             loss = criterion(logits_, y_batch)
@@ -205,7 +205,7 @@ def fusion_threshold_optimization(model, dataloader, gpu_id=None):
     with torch.no_grad():
 
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(dataloader):
-            print('threshold optimization {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('threshold optimization {} of {}'.format(i + 1, len(dataloader)), end='\r')
 
             X_sig_batch, X_img_batch = X_sig_batch.to(gpu_id), X_img_batch.to(gpu_id)
 
@@ -346,7 +346,7 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         # print(list(img_model.conv2d_1.parameters())[0][0, 0])
         # print(list(sig_model.rnn.parameters())[0][:10])
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(train_dataloader):
-            print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
+            #print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
             loss = fusion_train_batch(
                 X_sig_batch, X_img_batch, y_batch, model, optimizer_, criterion, gpu_id=gpu_id)
             del X_sig_batch
@@ -363,6 +363,10 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         print('Validation loss: %.4f' % (val_loss))
 
         valid_mean_losses.append(val_loss)
+
+        if np.isnan(mean_loss) or np.isnan(val_loss):
+            print("Couldn't finish - nan loss.")
+            return
 
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         # save the model at each epoch where the validation loss is the best so far

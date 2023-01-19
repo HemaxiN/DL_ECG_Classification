@@ -180,7 +180,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         # print(list(img_model.conv2d_1.parameters())[0][0, 0])
         # print(list(sig_model.rnn.parameters())[0][:10])
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(train_dataloader):
-            print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
+            #print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
             loss = early.fusion_train_batch(
                 X_sig_batch, X_img_batch, y_batch, model, optimizer_, criterion, gpu_id=gpu_id)
             del X_sig_batch
@@ -378,6 +378,10 @@ def main():
         print('\t\tValid loss: %.4f' % (val_loss))
 
         valid_mean_losses.append(val_loss)
+
+        if np.isnan(mean_loss) or np.isnan(val_loss):
+            print("Couldn't finish - nan loss.")
+            return
 
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         # save the model at each epoch where the validation loss is the best so far

@@ -38,6 +38,7 @@ def iterator(tests):
     fhplog.send_message("Starting")
     for idx, row in tests.iterrows():
         fhplog.send_message("Starting Test ID: {} | Iteration{}/{}".format(row["test_id"], idx + 1, total))
+        fhplog.send_message(row.to_dict())
         print(row.to_dict())
 
         strategy = row["strategy"]
@@ -61,10 +62,10 @@ if __name__ == "__main__":
     gpu_id = 0
     sig_type = 'bigru'
     img_type = 'alexnet'
-    #signal_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/data_for_rnn/'
-    signal_data = 'Dataset/data_for_rnn/'
-    image_data = 'Dataset/Images/'
-    #image_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
+    signal_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/data_for_rnn/'
+    # signal_data = 'Dataset/data_for_rnn/'
+    # image_data = 'Dataset/Images/'
+    image_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
     epochs = 1
     path_save_model = 'save_models/paper_results/'
     patience = 10

@@ -37,7 +37,7 @@ def modalities_evaluate(model, dataloader, gpu_id=None):
         pred_logger = []
         y_logger = []
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = gru.predict(model, x_batch, None)
             y_true = np.array(y_batch.cpu())
@@ -155,7 +155,7 @@ def threshold_optimization(model, dataloader, gpu_id=None):
     with torch.no_grad():
 
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('threshold optimization {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('threshold optimization {} of {}'.format(i + 1, len(dataloader)), end='\r')
 
             x_batch = x_batch.to(gpu_id)
 
@@ -300,6 +300,10 @@ def training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, 
         print('Validation loss: %.4f' % (val_loss))
 
         valid_mean_losses.append(val_loss)
+
+        if np.isnan(mean_loss) or np.isnan(val_loss):
+            print("Couldn't finish - nan loss.")
+            return
 
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         # save the model at each epoch where the validation loss is the best so far
