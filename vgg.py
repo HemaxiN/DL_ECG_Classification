@@ -23,7 +23,7 @@ class VGG16(nn.Module):
 
         self.n_classes = n_classes
 
-        n_filters = 8
+        n_filters = 16
         self.conv1_1 = nn.Conv2d(in_channels=9, out_channels=n_filters, kernel_size=3, padding=1)
         self.conv1_2 = nn.Conv2d(in_channels=n_filters, out_channels=n_filters, kernel_size=3, padding=1)
 
@@ -44,7 +44,7 @@ class VGG16(nn.Module):
 
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.fc1 = nn.Linear(32768, 4096)
+        self.fc1 = nn.Linear(65536, 4096)
         self.fc2 = nn.Linear(4096, 4096)
         self.fc3 = nn.Linear(4096, self.n_classes)
 
