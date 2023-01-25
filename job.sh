@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=early_pipeline_ecg
-#SBATCH --output=early-output.log
+#SBATCH --job-name=joint_pipeline_ecg
+#SBATCH --output=joint-output.log
 #SBATCH --mem=32G
 # SBATCH --time=3-00:00:00
 #SBATCH --cpus-per-task=4

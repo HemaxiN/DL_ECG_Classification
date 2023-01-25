@@ -93,6 +93,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
                             bidirectional=False).to(gpu_id)
     elif sig_type == 'bigru':
         sig_path = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/grubi_dropout05_lr0005_model5'
+        # sig_path = 'save_models/grubi_dropout05_lr0005_model5'
         hidden_size_ = 128
         num_layers = 2
         dropout_rate = 0.5
@@ -104,6 +105,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
 
     if img_type == 'alexnet':
         img_path = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/alexnet'
+        # img_path = 'save_models/alexnet'
         img_model = alexnet.AlexNet(4).to(gpu_id)
 
     elif img_type == 'resnet':
@@ -197,6 +199,10 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         print('\t\tValid loss: %.4f' % (val_loss))
 
         valid_mean_losses.append(val_loss)
+
+        if np.isnan(mean_loss) or np.isnan(val_loss):
+            print("Failed. Exiting")
+            return
 
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
         # save the model at each epoch where the validation loss is the best so far

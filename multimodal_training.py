@@ -4,7 +4,7 @@ from late_fusion import training_late
 from early_fusion import training_early
 from joint_fusion import training_joint
 
-use_zulip = True
+use_zulip = False
 
 if use_zulip:
 
@@ -35,7 +35,7 @@ def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_dat
                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
 
 
-@fhplog.train_logger
+#@fhplog.train_logger
 def iterator(tests):
 
     total = len(tests)
@@ -62,8 +62,8 @@ def iterator(tests):
 
 if __name__ == "__main__":
 
-    # tests = pd.read_csv("multimodal_tests_joint.csv", delimiter=";", decimal=",")
-    tests = pd.read_csv("multimodal_tests_late.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("multimodal_tests_joint.csv", delimiter=";", decimal=",")
+    # tests = pd.read_csv("multimodal_tests_late.csv", delimiter=";", decimal=",")
     # tests = pd.read_csv("multimodal_tests_early.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
