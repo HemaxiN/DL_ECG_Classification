@@ -279,7 +279,7 @@ def main():
         sig_model = gru.RNN(3, hidden_size, num_layers, 4, dropout_rate, gpu_id=opt.gpu_id,
                             bidirectional=False).to(opt.gpu_id)
     elif sig_type == 'bigru':
-        sig_path = 'save_models/grubi_dropout05_lr0005_model5'
+        sig_path = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/grubi_dropout05_lr0005_model5'
         hidden_size = 128
         num_layers = 2
         dropout_rate = 0.5
@@ -290,7 +290,7 @@ def main():
         raise ValueError('1D model is not defined.')
 
     if img_type == 'alexnet':
-        img_path = 'save_models/alexnet'
+        img_path = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/alexnet'
         img_model = alexnet.AlexNet(4).to(opt.gpu_id)
 
     elif img_type == 'resnet':
