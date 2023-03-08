@@ -27,6 +27,7 @@ import os
 from count_parameters import count_parameters
 from sklearn.metrics import roc_curve
 
+from torchmetrics.classification import MultilabelAUROC
 
 class FusionDataset(Dataset):
     def __init__(self, sig_path, img_path, train_dev_test, part='train'):
@@ -169,6 +170,34 @@ def fusion_evaluate(model, dataloader, thr, gpu_id=None):
         model.train()
 
     return matrix
+    # cols: TP, FN, FP, TN
+
+
+def fusion_auroc(model, dataloader, gpu_id=None):
+    """
+    model: Pytorch model
+    X (batch_size, 1000, 3) : batch of examples
+    y (batch_size,4): ground truth labels_train
+    """
+    model.eval()
+    with torch.no_grad():
+        preds = []
+        trues = []
+        for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(dataloader):
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            X_sig_batch, X_img_batch, y_batch = X_sig_batch.to(gpu_id), X_img_batch.to(gpu_id), y_batch.to(gpu_id)
+
+            preds += fusion_predict(model, X_sig_batch, X_img_batch, None)
+            trues += [y_batch.cpu()[0]]
+
+            del X_sig_batch
+            del X_img_batch
+            del y_batch
+            torch.cuda.empty_cache()
+
+    preds = torch.stack(preds)
+    trues = torch.stack(trues).int()
+    return MultilabelAUROC(num_labels=4, average=None)(preds, trues)
     # cols: TP, FN, FP, TN
 
 

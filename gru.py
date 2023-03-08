@@ -15,6 +15,7 @@ import statistics
 import numpy as np
 import os
 from sklearn.metrics import roc_curve
+from torchmetrics.classification import MultilabelAUROC
 
 
 class RNN(nn.Module):
@@ -131,6 +132,33 @@ def evaluate(model, dataloader, thr, gpu_id=None):
         model.train()
 
     return matrix
+    # cols: TP, FN, FP, TN
+
+
+def auroc(model, dataloader, gpu_id=None):
+    """
+    model: Pytorch model
+    X (batch_size, 1000, 3) : batch of examples
+    y (batch_size,4): ground truth labels_train
+    """
+    model.eval()  # set dropout and batch normalization layers to evaluation mode
+    with torch.no_grad():
+        preds = []
+        trues = []
+        for i, (x_batch, y_batch) in enumerate(dataloader):
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
+
+            preds += predict(model, x_batch, None)
+            trues += [y_batch.cpu()[0]]
+
+            del x_batch
+            del y_batch
+            torch.cuda.empty_cache()
+
+    preds = torch.stack(preds)
+    trues = torch.stack(trues).int()
+    return MultilabelAUROC(num_labels=4, average=None)(preds, trues)
     # cols: TP, FN, FP, TN
 
 
