@@ -25,7 +25,7 @@ class AlexNet(nn.Module):
             n_classes (int): Number of classes in our classification problem
         """
         super(AlexNet, self).__init__()
-        nb_filters = 16 #number of filters in the first layer
+        nb_filters = 8 #number of filters in the first layer
         self.n_classes = n_classes
         self.conv2d_1 = nn.Conv2d(9,nb_filters,11,stride=4) #9 input channels
         #nn.Conv2d(in_channels, out_channels, kernel_size)
@@ -39,7 +39,7 @@ class AlexNet(nn.Module):
         #nn.MaxPool2d(kernel_size)
         self.maxpool2d = nn.MaxPool2d(3, stride=2)
         self.relu = nn.ReLU()
-        self.dropout = nn.Dropout2d(0.3)
+        self.dropout = nn.Dropout2d(0)
 
     def forward(self, X, **kwargs):
         """

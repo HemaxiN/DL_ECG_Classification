@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from utils import configure_seed, configure_device, plot, compute_scores_dev, compute_scores, Dataset_for_RNN, \
+from utils import configure_seed, configure_device, compute_scores, Dataset_for_RNN, \
     plot_losses
 
 from datetime import datetime
@@ -15,6 +15,7 @@ import statistics
 import numpy as np
 import os
 from sklearn.metrics import roc_curve
+from torchmetrics.classification import MultilabelAUROC
 
 
 class RNN(nn.Module):
@@ -101,8 +102,11 @@ def predict(model, X, thr):
     """
     logits_ = model(X)  # (batch_size, n_classes)
     probabilities = torch.sigmoid(logits_).cpu()
-    pred_labels = np.array(probabilities.numpy() > thr, dtype=float)  # (batch_size, n_classes)
-    return pred_labels
+
+    if thr is None:
+        return probabilities
+    else:
+        return np.array(probabilities.numpy() >= thr, dtype=float)
 
 
 def evaluate(model, dataloader, thr, gpu_id=None):
@@ -115,7 +119,7 @@ def evaluate(model, dataloader, thr, gpu_id=None):
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = predict(model, x_batch, thr)
             y_true = np.array(y_batch.cpu())
@@ -131,13 +135,40 @@ def evaluate(model, dataloader, thr, gpu_id=None):
     # cols: TP, FN, FP, TN
 
 
+def auroc(model, dataloader, gpu_id=None):
+    """
+    model: Pytorch model
+    X (batch_size, 1000, 3) : batch of examples
+    y (batch_size,4): ground truth labels_train
+    """
+    model.eval()  # set dropout and batch normalization layers to evaluation mode
+    with torch.no_grad():
+        preds = []
+        trues = []
+        for i, (x_batch, y_batch) in enumerate(dataloader):
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
+
+            preds += predict(model, x_batch, None)
+            trues += [y_batch.cpu()[0]]
+
+            del x_batch
+            del y_batch
+            torch.cuda.empty_cache()
+
+    preds = torch.stack(preds)
+    trues = torch.stack(trues).int()
+    return MultilabelAUROC(num_labels=4, average=None)(preds, trues)
+    # cols: TP, FN, FP, TN
+
+
 # Validation loss
 def compute_loss(model, dataloader, criterion, gpu_id=None):
     model.eval()
     with torch.no_grad():
         val_losses = []
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = model(x_batch)
             loss = criterion(y_pred, y_batch)
