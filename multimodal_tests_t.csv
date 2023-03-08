@@ -1,3 +1,0 @@
-﻿test_id;strategy;batch_size;dropout;hidden_size;optimizer;learning_rate;l2_decay
-1111;early;512;0;128;adam;0,001;0
-2222;early;512;0;256;adam;0,001;0
