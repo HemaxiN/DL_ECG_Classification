@@ -60,7 +60,7 @@ class CNN1d_GRU(nn.Module):
         num_feat = X.size(2)
 
         # reshape X to enter the 1D CNN
-        x_1dcnn = torch.reshape(X, (batch_size, num_feat, seq_len))
+        x_1dcnn = torch.reshape(X.to(self.gpu_id), (batch_size, num_feat, seq_len))
 
         # convolutional layers (each followed by a maxpooling and a dropout layer)
         x1 = self.dropout(self.maxpool(self.relu(self.cnn1d_1(x_1dcnn))))
