@@ -133,6 +133,29 @@ def compute_scores(y_true, y_pred, matrix):
     return matrix
 
 
+def compute_scores_with_norm(y_true, y_pred, matrix, norm_vec):
+    for j in range(len(y_true)):
+        pred = y_pred[j]
+        gt = y_true[j]
+        norm_pred = True
+        norm_gt = True
+        for i in range(0, 4):  # for each class
+            matrix = computetpfnfp(pred[i], gt[i], i, matrix)
+            if gt[i] == 1 & norm_gt:
+                norm_gt = False
+            if pred[i] == 1 & norm_pred:
+                norm_pred = False
+        if norm_gt == 0 and norm_pred == 0:  # tn
+            norm_vec[3] += 1
+        if norm_gt == 1 and norm_pred == 0:  # fn
+            norm_vec[1] += 1
+        if norm_gt == 0 and norm_pred == 1:  # fp
+            norm_vec[2] += 1
+        if norm_gt == 1 and norm_pred == 1:  # tp
+            norm_vec[0] += 1
+    return matrix, norm_vec
+
+
 def compute_scores_dev(matrix):
     matrix[matrix == 0] = 0.01
     # print(matrix)
