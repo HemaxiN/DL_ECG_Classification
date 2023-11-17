@@ -2,14 +2,12 @@
 # deep structured learning code https://fenix.tecnico.ulisboa.pt/disciplinas/AEProf/2021-2022/1-semestre/homeworks
 
 import argparse
-
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-
+import torch.nn.functional as F
 from utils import configure_seed, configure_device, compute_scores, Dataset_for_RNN, \
-    plot_losses, compute_scores_with_norm
-
+    plot_losses
 from datetime import datetime
 import statistics
 import numpy as np
@@ -18,9 +16,34 @@ from sklearn.metrics import roc_curve
 from torchmetrics.classification import MultilabelAUROC
 
 
+class Attention(nn.Module):
+    def __init__(self, hidden_size, batch_first=False):
+        super(Attention, self).__init__()
+        self.hidden_size = hidden_size
+        self.batch_first = batch_first
+
+        # Define the attention layer
+        self.attention = nn.Linear(hidden_size, 1)
+
+    def forward(self, rnn_output):
+        # rnn_output shape: (batch_size, seq_length, hidden_size) if batch_first=True
+        # rnn_output shape: (seq_length, batch_size, hidden_size) if batch_first=False
+        if not self.batch_first:
+            rnn_output = rnn_output.transpose(0, 1)  # (batch_size, seq_length, hidden_size)
+
+        # Apply attention layer to the hidden states
+        attn_weights = self.attention(rnn_output)  # (batch_size, seq_length, 1)
+        attn_weights = F.softmax(attn_weights, dim=1)
+
+        # Multiply the weights by the rnn_output to get a weighted sum
+        context = torch.sum(attn_weights * rnn_output, dim=1)  # (batch_size, hidden_size)
+        return context, attn_weights
+
+
 class RNN(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, bidirectional, gpu_id=None,
-                 **kwargs):
+    # ... [previous __init__ definition] ...
+
+    def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, bidirectional, gpu_id=None):
         """
         Define the layers of the model
         Args:
@@ -40,7 +63,6 @@ class RNN(nn.Module):
         self.dropout_rate = dropout_rate
         self.bidirectional = bidirectional
 
-        # RNN can be replaced with GRU/LSTM (for GRU the rest of the model stays exactly the same)
         self.rnn = nn.GRU(input_size, hidden_size, num_layers, dropout=dropout_rate, batch_first=True,
                           bidirectional=bidirectional)  # batch_first: first dimension is the batch size
 
@@ -49,32 +71,41 @@ class RNN(nn.Module):
         else:
             self.d = 1
 
-        self.fc = nn.Linear(hidden_size*self.d, n_classes)  # linear layer for the classification part
+        # Initialize the attention layer
+        self.attention = Attention(hidden_size * self.d, batch_first=True)
 
-    def forward(self, X, **kwargs):
-        """
-        Forward Propagation
+        # Adjust the input dimension for the classification layer according to bidirectionality
+        self.fc = nn.Linear(hidden_size * self.d, n_classes)
 
-        Args:
-            X: batch of training examples with dimension (batch_size, 1000, 3)
+    def forward(self, X):
         """
+                Forward Propagation
+
+                Args:
+                    X: batch of training examples with dimension (batch_size, 1000, 3)
+                """
         # initial hidden state:
-        h_0 = torch.zeros(self.num_layers*self.d, X.size(0), self.hidden_size).to(self.gpu_id)
+        h_0 = torch.zeros(self.num_layers * self.d, X.size(0), self.hidden_size).to(self.gpu_id)
 
         out_rnn, _ = self.rnn(X.to(self.gpu_id), h_0)
         # out_rnn shape: (batch_size, seq_length, hidden_size*d) = (batch_size, 1000, hidden_size*d)
 
-        if self.bidirectional:
-            # concatenate last timestep from the "left-to-right" direction and the first timestep from the
-            # "right-to-left" direction
-            out_rnn = torch.cat((out_rnn[:, -1, :self.hidden_size], out_rnn[:, 0, self.hidden_size:]), dim=1)
-        else:
-            # last timestep
-            out_rnn = out_rnn[:, -1, :]
+        # when we apply the attention mechanism, we want to apply it to the whole sequence, so the next part is deleted
+        # if self.bidirectional:
+        #     # concatenate last timestep from the "left-to-right" direction and the first timestep from the
+        #     # "right-to-left" direction
+        #     out_rnn = torch.cat((out_rnn[:, -1, :self.hidden_size], out_rnn[:, 0, self.hidden_size:]), dim=1)
+        # else:
+        #     # last timestep
+        #     out_rnn = out_rnn[:, -1, :]
 
-        # out_rnn shape: (batch_size, hidden_size*d) - ready to enter the fc layer
-        out_fc = self.fc(out_rnn)
-        # out_fc shape: (batch_size, num_classes)
+        # Apply attention
+        attn_output, attn_weights = self.attention(out_rnn)
+        # attn_output shape: (batch_size, hidden_size*d)
+
+        # Output layer
+        out_fc = self.fc(attn_output)
+        # out_fc shape: (batch_size, n_classes)
 
         return out_fc
 
@@ -132,33 +163,6 @@ def evaluate(model, dataloader, thr, gpu_id=None):
         model.train()
 
     return matrix
-    # cols: TP, FN, FP, TN
-
-
-def evaluate_with_norm(model, dataloader, thr, gpu_id=None):
-    """
-    model: Pytorch model
-    X (batch_size, 1000, 3) : batch of examples
-    y (batch_size,4): ground truth labels_train
-    """
-    model.eval()  # set dropout and batch normalization layers to evaluation mode
-    with torch.no_grad():
-        matrix = np.zeros((4, 4))
-        norm_vec = np.zeros(4)
-        for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
-            x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
-            y_pred = predict(model, x_batch, thr)
-            y_true = np.array(y_batch.cpu())
-            matrix, norm_vec = compute_scores_with_norm(y_true, y_pred, matrix, norm_vec)
-
-            del x_batch
-            del y_batch
-            torch.cuda.empty_cache()
-
-        model.train()
-
-    return matrix, norm_vec
     # cols: TP, FN, FP, TN
 
 
