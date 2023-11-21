@@ -213,9 +213,13 @@ def threshold_optimization(model, dataloader, gpu_id=None):
     """
     Make labels_train predictions for "X" (batch_size, 1000, 3)
     """
+    save_probs = []
+    save_y = []
+    threshold_opt = np.zeros(4)
+
     model.eval()
     with torch.no_grad():
-        threshold_opt = np.zeros(4)
+        #threshold_opt = np.zeros(4)
         for _, (X, Y) in enumerate(dataloader):
             X, Y = X.to(gpu_id), Y.to(gpu_id)
 
@@ -225,17 +229,22 @@ def threshold_optimization(model, dataloader, gpu_id=None):
             logits_ = model(X)  # (batch_size, n_classes)
             probabilities = torch.sigmoid(logits_).cpu()
 
-            # find the optimal threshold with ROC curve for each disease
+            save_probs += [probabilities.numpy()]
+            save_y += [Y]
 
-            for dis in range(0, 4):
-                # print(probabilities[:, dis])
-                # print(Y[:, dis])
-                fpr, tpr, thresholds = roc_curve(Y[:, dis], probabilities[:, dis])
-                # geometric mean of sensitivity and specificity
-                gmean = np.sqrt(tpr * (1 - fpr))
-                # optimal threshold
-                index = np.argmax(gmean)
-                threshold_opt[dis] = round(thresholds[index], ndigits=2)
+    # find the optimal threshold with ROC curve for each disease
+
+    save_probs = np.array(np.concatenate(save_probs)).reshape((-1, 4))
+    save_y = np.array(np.concatenate(save_y)).reshape((-1, 4))
+    for dis in range(0, 4):
+        # print(probabilities[:, dis])
+        # print(Y[:, dis])
+        fpr, tpr, thresholds = roc_curve(save_y[:, dis], save_probs[:, dis])
+        # geometric mean of sensitivity and specificity
+        gmean = np.sqrt(tpr * (1 - fpr))
+        # optimal threshold
+        index = np.argmax(gmean)
+        threshold_opt[dis] = round(thresholds[index], ndigits=2)
 
     return threshold_opt
 

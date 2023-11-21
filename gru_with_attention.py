@@ -40,7 +40,7 @@ class Attention(nn.Module):
         return context, attn_weights
 
 
-class RNN(nn.Module):
+class RNN_att(nn.Module):
     # ... [previous __init__ definition] ...
 
     def __init__(self, input_size, hidden_size, num_layers, n_classes, dropout_rate, bidirectional, gpu_id=None):
@@ -54,7 +54,7 @@ class RNN(nn.Module):
             dropout_rate (float): Dropout rate to be applied in all rnn layers except the last one
             bidirectional (bool): Boolean value: if true, gru layers are bidirectional
         """
-        super(RNN, self).__init__()
+        super(RNN_att, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -217,9 +217,13 @@ def threshold_optimization(model, dataloader, gpu_id=None):
     """
     Make labels_train predictions for "X" (batch_size, 1000, 3)
     """
+    save_probs = []
+    save_y = []
+    threshold_opt = np.zeros(4)
+
     model.eval()
     with torch.no_grad():
-        threshold_opt = np.zeros(4)
+        #threshold_opt = np.zeros(4)
         for _, (X, Y) in enumerate(dataloader):
             X, Y = X.to(gpu_id), Y.to(gpu_id)
 
@@ -229,17 +233,22 @@ def threshold_optimization(model, dataloader, gpu_id=None):
             logits_ = model(X)  # (batch_size, n_classes)
             probabilities = torch.sigmoid(logits_).cpu()
 
-            # find the optimal threshold with ROC curve for each disease
+            save_probs += [probabilities.numpy()]
+            save_y += [Y]
 
-            for dis in range(0, 4):
-                # print(probabilities[:, dis])
-                # print(Y[:, dis])
-                fpr, tpr, thresholds = roc_curve(Y[:, dis], probabilities[:, dis])
-                # geometric mean of sensitivity and specificity
-                gmean = np.sqrt(tpr * (1 - fpr))
-                # optimal threshold
-                index = np.argmax(gmean)
-                threshold_opt[dis] = round(thresholds[index], ndigits=2)
+    # find the optimal threshold with ROC curve for each disease
+
+    save_probs = np.array(np.concatenate(save_probs)).reshape((-1, 4))
+    save_y = np.array(np.concatenate(save_y)).reshape((-1, 4))
+    for dis in range(0, 4):
+        # print(probabilities[:, dis])
+        # print(Y[:, dis])
+        fpr, tpr, thresholds = roc_curve(save_y[:, dis], save_probs[:, dis])
+        # geometric mean of sensitivity and specificity
+        gmean = np.sqrt(tpr * (1 - fpr))
+        # optimal threshold
+        index = np.argmax(gmean)
+        threshold_opt[dis] = round(thresholds[index], ndigits=2)
 
     return threshold_opt
 
@@ -287,7 +296,7 @@ def main():
     n_classes = 4
 
     # initialize the model
-    model = RNN(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id,
+    model = RNN_att(input_size, hidden_size, num_layers, n_classes, dropout_rate=opt.dropout, gpu_id=opt.gpu_id,
                 bidirectional=opt.bidirectional)
     model = model.to(opt.gpu_id)
 
@@ -333,6 +342,7 @@ def main():
         train_mean_losses.append(mean_loss)
         val_loss = compute_loss(model, dev_dataloader, criterion, gpu_id=opt.gpu_id)
         valid_mean_losses.append(val_loss)
+        print('Validation loss: %.4f' % (val_loss))
 
         dt = datetime.now()
         # https://pytorch.org/tutorials/beginner/saving_loading_models.html
