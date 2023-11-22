@@ -16,7 +16,7 @@ from utils import configure_device, configure_seed, plot_losses, compute_save_me
 import gru as gru
 import numpy as np
 
-import AlexNet as alexnet
+import alexnetattention as alexnet
 import resnet as resnet
 
 from datetime import datetime
@@ -84,12 +84,13 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
 
     # LOAD MODELS
     if sig_type == 'gru':
-        sig_path = 'best_trained_rnns/gru_3lay_128hu'
-        hidden_size_ = 128
-        num_layers = 3
-        dropout_rate = 0.3
+        # UPDATED TO REVISION
+        sig_path = 'best_trained_rnns/gru_3layers_dropout0_model8'
+        sig_hidden_size = 128
+        num_layers = 2
+        dropout_rate = 0
 
-        sig_model = gru.RNN(3, hidden_size_, num_layers, 4, dropout_rate, gpu_id=gpu_id,
+        sig_model = gru.RNN(3, sig_hidden_size, num_layers, 4, dropout_rate, gpu_id=gpu_id,
                             bidirectional=False).to(gpu_id)
     elif sig_type == 'bigru':
         sig_path = 'save_models/grubi_dropout05_lr0005_model5'
@@ -103,7 +104,8 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         raise ValueError('1D model is not defined.')
 
     if img_type == 'alexnet':
-        img_path = 'save_models/alexnet'
+        # UPDATED TO REVISION + ON IMPORTS
+        img_path = 'save_models/alexnetatt'
         img_model = alexnet.AlexNet(4).to(gpu_id)
 
     elif img_type == 'resnet':

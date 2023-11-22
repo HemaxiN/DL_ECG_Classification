@@ -3,7 +3,7 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 import gru as gru
-import AlexNet as alexnet
+import alexnetattention as alexnet
 import late_fusion as late
 import early_fusion as early
 import joint_fusion as joint
@@ -35,14 +35,14 @@ elif type == "late":
     hidden_size = 512
     dropout = 0
 
-sig_path = "save_models/grubi_dropout05_lr0005_model5"
-img_path = "save_models/alexnet"
+sig_path = "best_trained_rnns/gru_3layers_dropout0_model8"
+img_path = "save_models/alexnetatt"
 
 gpu_id = 0 if torch.cuda.is_available() else "cpu"
 
 sig_data = "Dataset/data_for_rnn/"
-sig_model = gru.RNN(3, 128, 2, 4, 0.5, gpu_id=gpu_id,
-                    bidirectional=True).to(gpu_id)
+sig_model = gru.RNN(3, 128, 2, 4, 0, gpu_id=gpu_id,
+                    bidirectional=False).to(gpu_id)
 
 img_data = "Dataset/Images/"
 img_model = alexnet.AlexNet(4).to(gpu_id)

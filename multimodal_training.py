@@ -62,20 +62,16 @@ def iterator(tests):
 
 if __name__ == "__main__":
 
-    # tests = pd.read_csv("multimodal_tests_joint.csv", delimiter=";", decimal=",")
-    # tests = pd.read_csv("multimodal_tests_late.csv", delimiter=";", decimal=",")
-    tests = pd.read_csv("multimodal_tests_early.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("multimodal_tests_revision.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0
-    sig_type = 'bigru'
+    sig_type = 'gru'
     img_type = 'alexnet'
-    #signal_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/data_for_rnn/'
-    #image_data = '/net/sharedfolders/datasets/MOTION/SAIFFER/RicardoPhD/Images/'
     signal_data = 'Dataset/data_for_rnn/'
     image_data = 'Dataset/Images/'
     epochs = 200
-    path_save_model = 'save_models/paper_results/'
+    path_save_model = 'save_models/paper_results_revision/'
     patience = 10
     early_stop = True
 

@@ -3,3 +3,4 @@ save_models/
 job.sh
 
 *.Identifier
+*.csv
