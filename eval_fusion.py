@@ -38,7 +38,7 @@ elif type == "late":
 sig_path = "save_models/grubi_dropout05_lr0005_model5"
 img_path = "save_models/alexnet"
 
-gpu_id = 0
+gpu_id = 0 if torch.is_available() else "cpu"
 
 sig_data = "Dataset/data_for_rnn/"
 sig_model = gru.RNN(3, 128, 2, 4, 0.5, gpu_id=gpu_id,
