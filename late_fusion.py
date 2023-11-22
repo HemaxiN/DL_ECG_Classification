@@ -195,7 +195,7 @@ def training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, 
         # UPDATED TO REVISION
         sig_path = 'best_trained_rnns/gru_3layers_dropout0_model8'
         sig_hidden_size = 128
-        num_layers = 2
+        num_layers = 3
         dropout_rate = 0
 
         sig_model = gru.RNN(3, sig_hidden_size, num_layers, 4, dropout_rate, gpu_id=gpu_id,
@@ -203,7 +203,7 @@ def training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, 
     elif sig_type == 'bigru':
         sig_path = 'save_models/grubi_dropout05_lr0005_model5'
         hidden_size_ = 128
-        num_layers = 2
+        num_layers = 3
         dropout_rate = 0.5
 
         sig_model = gru.RNN(3, hidden_size_, num_layers, 4, dropout_rate, gpu_id=gpu_id,

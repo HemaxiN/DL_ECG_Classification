@@ -301,7 +301,7 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         # UPDATED TO REVISION
         sig_path = 'best_trained_rnns/gru_3layers_dropout0_model8'
         sig_hidden_size = 128
-        num_layers = 2
+        num_layers = 3
         dropout_rate = 0
 
         sig_model = gru.RNN(3, sig_hidden_size, num_layers, 4, dropout_rate, gpu_id=gpu_id,

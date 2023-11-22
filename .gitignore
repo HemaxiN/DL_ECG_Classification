@@ -4,3 +4,9 @@ job.sh
 
 *.Identifier
 *.csv
+*.envrc
+
+.venv/
+__pycache__/
+
+reqs.txt
