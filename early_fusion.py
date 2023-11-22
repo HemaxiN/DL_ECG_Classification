@@ -343,21 +343,21 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     img_model.conv2d_5.register_forward_hook(get_activation(img_hook))
     sig_model.rnn.register_forward_hook(get_activation(sig_hook))
 
-    img_size = {'conv2d_1': 6400, 'conv2d_2': 3200, 'conv2d_3': 1024, 'conv2d_4': 2048, 'conv2d_5': 4096}
-    sig_features = 256
+    img_size = {'conv2d_1': 6400, 'conv2d_2': 3200, 'conv2d_3': 1024, 'conv2d_4': 2048, 'conv2d_5': 9216}
+    sig_features = 128
     img_features = img_size[img_hook]
 
+    model = EarlyFusionNet(4, sig_features, img_features, hidden_size, dropout,
+                           sig_model, img_model, sig_hook, img_hook).to(gpu_id)
+    
     # LOAD DATA
     train_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='train')
     dev_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='dev')
     test_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='test')
-
+    
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    model = EarlyFusionNet(4, sig_features, img_features, hidden_size, dropout,
-                           sig_model, img_model, sig_hook, img_hook).to(gpu_id)
 
     # get an optimizer
     optims = {

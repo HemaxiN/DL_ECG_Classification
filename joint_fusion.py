@@ -122,8 +122,8 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     sig_model.fc = Identity()
     img_model.linear_3 = Identity()  # applied on the last dense layer only
 
-    sig_features = 256
-    img_features = 2048  # 9216, 4096, 2048
+    sig_features = 128
+    img_features = 4096  # 9216, 4096, 2048
 
     # LOAD DATA
     train_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='train')
