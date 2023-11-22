@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 from utils import configure_device, configure_seed, ECGImageDataset, Dataset_for_RNN, plot_losses, compute_scores, \
-    compute_save_metrics
+    compute_save_metrics, compute_scores_with_norm
 import gru as gru
 import numpy as np
 import statistics
@@ -171,6 +171,33 @@ def fusion_evaluate(model, dataloader, thr, gpu_id=None):
 
     return matrix
     # cols: TP, FN, FP, TN
+
+
+def fusion_evaluate_with_norm(model, dataloader, thr, gpu_id=None):
+    """
+    model: Pytorch model
+    X (batch_size, 1000, 3) : batch of examples
+    y (batch_size,4): ground truth labels_train
+    """
+    model.eval()
+    with torch.no_grad():
+        matrix = np.zeros((4, 4))
+        norm_vec = np.zeros(4)
+        for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(dataloader):
+            # print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
+            X_sig_batch, X_img_batch, y_batch = X_sig_batch.to(gpu_id), X_img_batch.to(gpu_id), y_batch.to(gpu_id)
+            y_pred = fusion_predict(model, X_sig_batch, X_img_batch, thr)
+            y_true = np.array(y_batch.cpu())
+            matrix, norm_vec = compute_scores_with_norm(y_true, y_pred, matrix, norm_vec)
+
+            del X_sig_batch
+            del X_img_batch
+            del y_batch
+            torch.cuda.empty_cache()
+
+        model.train()
+
+    return matrix, norm_vec
 
 
 def fusion_auroc(model, dataloader, gpu_id=None):

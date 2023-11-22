@@ -94,10 +94,10 @@ model.eval()
 
 # evaluate the performance of the model
 if type == 'late':
-    matrix = gru.evaluate(model, test_dataloader, thresholds, gpu_id=gpu_id)
+    matrix, norm_vec = gru.evaluate_with_norm(model, test_dataloader, thresholds, gpu_id=gpu_id)
     aurocs = gru.auroc(model, test_dataloader, gpu_id=gpu_id)
 else:
-    matrix = early.fusion_evaluate(model, test_dataloader, thresholds, gpu_id=gpu_id)
+    matrix, norm_vec = early.fusion_evaluate_with_norm(model, test_dataloader, thresholds, gpu_id=gpu_id)
     aurocs = early.fusion_auroc(model, test_dataloader, gpu_id=gpu_id)
 
 count_parameters(model)
@@ -131,6 +131,12 @@ HYP_prec = matrix[3, 0] / (matrix[3, 0] + matrix[3, 2])
 HYP_f1 = (2 * matrix[3, 0]) / (2 * matrix[3, 0] + matrix[3, 2] + matrix[3, 1])
 HYP_auroc = aurocs[3].item()
 
+NORM_sensi = norm_vec[0] / (norm_vec[0] + norm_vec[1])
+NORM_spec = norm_vec[3] / (norm_vec[3] + norm_vec[2])
+NORM_acc = (norm_vec[0] + norm_vec[3]) / np.sum(matrix[3])
+NORM_prec = norm_vec[0] / (norm_vec[0] + norm_vec[2])
+NORM_f1 = (2 * norm_vec[0]) / (2 * norm_vec[0] + norm_vec[2] + norm_vec[1])
+
 # compute mean sensitivity and specificity:
 mean_mat = np.mean(matrix, axis=0)
 mean_sensi = mean_mat[0] / (mean_mat[0] + mean_mat[1])
@@ -141,10 +147,24 @@ mean_f1 = (2 * mean_mat[0]) / (2 * mean_mat[0] + mean_mat[2] + mean_mat[1])
 mean_auroc = aurocs.mean().item()
 mean_g = np.sqrt(mean_spec * mean_sensi)
 
-print('Final Test Results: \n ' + str(matrix) + '\n\n' +
+# compute mean sensitivity and specificity (with norm class):
+matrix_with_norm = np.vstack((matrix, norm_vec))
+mean_mat_n = np.mean(matrix_with_norm, axis=0)
+mean_sensi_n = mean_mat_n[0] / (mean_mat_n[0] + mean_mat_n[1])
+mean_spec_n = mean_mat_n[3] / (mean_mat_n[3] + mean_mat_n[2])
+mean_acc_n = (mean_mat_n[0] + mean_mat_n[3]) / np.sum(mean_mat_n)
+mean_prec_n = mean_mat_n[0] / (mean_mat_n[0] + mean_mat_n[2])
+mean_f1_n = (2 * mean_mat_n[0]) / (2 * mean_mat_n[0] + mean_mat_n[2] + mean_mat_n[1])
+# mean_auroc = aurocs.mean().item()
+mean_g_n = np.sqrt(mean_spec_n * mean_sensi_n)
+
+print('Final Test Results with NORM: \n ' + str(matrix) + '\n\n' +
       'MI: \n\tsensitivity - ' + str(MI_sensi) + '\n\tspecificity - ' + str(MI_spec) + '\n\tprecision - ' + str(MI_prec) + '\n\taccuracy - ' + str(MI_acc) + '\n\tF1 Score - ' + str(MI_f1) + '\n\tAUROC - ' + str(MI_auroc) + '\n' +
       'STTC: \n\tsensitivity - ' + str(STTC_sensi) + '\n\tspecificity - ' + str(STTC_spec) + '\n\tprecision - ' + str(STTC_prec) + '\n\taccuracy - ' + str(STTC_acc) + '\n\tF1 Score - ' + str(STTC_f1) + '\n\tAUROC - ' + str(STTC_auroc) + '\n' +
       'CD: \n\tsensitivity - ' + str(CD_sensi) + '\n\tspecificity - ' + str(CD_spec) + '\n\tprecision - ' + str(CD_prec) + '\n\taccuracy - ' + str(CD_acc) + '\n\tF1 Score - ' + str(CD_f1) + '\n\tAUROC - ' + str(CD_auroc) + '\n' +
       'HYP: \n\tsensitivity - ' + str(HYP_sensi) + '\n\tspecificity - ' + str(HYP_spec) + '\n\tprecision - ' + str(HYP_prec) + '\n\taccuracy - ' + str(HYP_acc) + '\n\tF1 Score - ' + str(HYP_f1) + '\n\tAUROC - ' + str(HYP_auroc) + '\n' +
-      'mean: \n\tG-Mean - ' + str(mean_g) + '\n\tsensitivity - ' + str(mean_sensi) + '\n\tspecificity - ' + str(mean_spec) + '\n\tprecision - ' + str(mean_prec) + '\n\taccuracy - ' + str(mean_acc) + '\n\tF1 Score - ' + str(mean_f1) + '\n\tAUROC - ' + str(mean_auroc))
+      'NORM: \n\tsensitivity - ' + str(NORM_sensi) + '\n\tspecificity - ' + str(NORM_spec) + '\n\tprecision - ' + str(NORM_prec) + '\n\taccuracy - ' + str(NORM_acc) + '\n\tF1 Score - ' + str(NORM_f1) + '\n' +
+      'mean: \n\tG-Mean - ' + str(mean_g_n) + '\n\tsensitivity - ' + str(mean_sensi_n) + '\n\tspecificity - ' + str(mean_spec_n) + '\n\tprecision - ' + str(mean_prec_n) + '\n\taccuracy - ' + str(mean_acc_n) + '\n\tF1 Score - ' + str(mean_f1_n))
 
+print('\n\n Final Test Results without Norm: \n' +
+      'mean: \n\tG-Mean - ' + str(mean_g) + '\n\tsensitivity - ' + str(mean_sensi) + '\n\tspecificity - ' + str(mean_spec) + '\n\tprecision - ' + str(mean_prec) + '\n\taccuracy - ' + str(mean_acc) + '\n\tF1 Score - ' + str(mean_f1) + '\n\tAUROC - ' + str(mean_auroc))
