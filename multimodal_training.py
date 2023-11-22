@@ -1,5 +1,5 @@
 import pandas as pd
-
+import torch
 from late_fusion import training_late
 from early_fusion import training_early
 from joint_fusion import training_joint
@@ -61,6 +61,8 @@ def iterator(tests):
 
 
 if __name__ == "__main__":
+    print("start")
+    print(torch.cuda.is_available())
 
     tests = pd.read_csv("multimodal_tests_revision.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
