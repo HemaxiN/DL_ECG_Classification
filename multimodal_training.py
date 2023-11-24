@@ -20,11 +20,11 @@ if use_zulip:
 
 
 def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                    optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id):
+                    optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info):
 
     if strategy == "early":
         training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
+                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
 
     elif strategy == "late":
         training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
@@ -32,7 +32,7 @@ def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_dat
 
     elif strategy == "joint":
         training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
+                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
 
 
 #@fhplog.train_logger
@@ -55,14 +55,15 @@ def iterator(tests):
         learning_rate = row["learning_rate"]
         l2_decay = row["l2_decay"]
         test_id = row["test_id"]
+        spec_info = row["specific"]
 
         central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
+                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
 
 
 if __name__ == "__main__":
 
-    tests = pd.read_csv("multimodal_tests_revision.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("multimodal_tests_revision_2.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0

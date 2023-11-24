@@ -289,7 +289,7 @@ def fusion_threshold_optimization(model, dataloader, gpu_id=None):
 
 
 def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id):
+                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, img_hook):
 
     configure_seed(seed=42)
     configure_device(gpu_id)
@@ -338,12 +338,12 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     img_model.eval()
 
     # REGISTER HOOKS
-    img_hook = 'conv2d_5'
+    #img_hook = 'conv2d_2'
     sig_hook = 'rnn'
-    img_model.conv2d_5.register_forward_hook(get_activation(img_hook))
+    img_model.__getattr__(img_hook).register_forward_hook(get_activation(img_hook))
     sig_model.rnn.register_forward_hook(get_activation(sig_hook))
 
-    img_size = {'conv2d_1': 6400, 'conv2d_2': 3200, 'conv2d_3': 1024, 'conv2d_4': 2048, 'conv2d_5': 4096}
+    img_size = {'conv2d_1': 0, 'conv2d_2': 0, 'conv2d_3': 512, 'conv2d_4': 1024, 'conv2d_5': 4096}
     sig_features = 128
     img_features = img_size[img_hook]
 
@@ -355,6 +355,10 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     dev_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='dev')
     test_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='test')
     
+    """train_dataset = FusionDataset(signal_data, image_data, [1500, 500, 500], part='train')
+    dev_dataset = FusionDataset(signal_data, image_data, [1500, 500, 500], part='dev')
+    test_dataset = FusionDataset(signal_data, image_data, [1500, 500, 500], part='test')"""
+
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
@@ -394,13 +398,13 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     print("Starting early fusion training at: {}".format(training_date))
 
     saving_dir = os.path.join(path_save_model,
-                              "early_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}".format(
+                              "early_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
                                   training_date, learning_rate, optimizer, dropout, epochs,
-                                  hidden_size, batch_size, l2_decay))
+                                  hidden_size, batch_size, l2_decay, img_hook))
     print("Save models at: {}".format(saving_dir))
 
     for e in epochs_:
-        print('Training epoch {}'.format(e))
+        # print('Training epoch {}'.format(e))
         # print(list(img_model.conv2d_1.parameters())[0][0, 0])
         # print(list(sig_model.rnn.parameters())[0][:10])
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(train_dataloader):
@@ -450,13 +454,13 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     matrix_dev = fusion_evaluate(model, dev_dataloader, opt_threshold, gpu_id=gpu_id)
 
     compute_save_metrics(matrix, matrix_dev, opt_threshold, training_date, best_epoch, "early", path_save_model,
-                         learning_rate, optimizer, dropout, epochs, hidden_size, batch_size, test_id)
+                         learning_rate, optimizer, dropout, epochs, hidden_size, batch_size, test_id, img_hook)
 
     # plot
     plot_losses(valid_mean_losses, train_mean_losses, ylabel='Loss',
-                name="{}{}training-validation-loss-early_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}".format(
+                name="{}{}_loss-early_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
                     path_save_model, test_id, training_date, e.item(), learning_rate, optimizer, dropout,
-                    epochs, hidden_size, batch_size, l2_decay))
+                    epochs, hidden_size, batch_size, l2_decay, img_hook))
 
 
 def main():

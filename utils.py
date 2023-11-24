@@ -177,7 +177,7 @@ def computetpfnfp(pred, gt, i, matrix):
 
 
 def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strategy, path_save_model, learning_rate,
-                         optimizer, dropout, epochs, hidden_size, batch_size, test_id):
+                         optimizer, dropout, epochs, hidden_size, batch_size, test_id, spec=""):
 
     # compute sensitivity and specificity for each class:
     MI_sensi = matrix[0, 0] / (matrix[0, 0] + matrix[0, 1])
@@ -266,7 +266,7 @@ def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strateg
     )
 
     with open(
-        "{}{}{}_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}.txt".format(
+        "{}{}_{}_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_{}.txt".format(
             path_save_model,
             test_id,
             strategy,
@@ -278,6 +278,7 @@ def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strateg
             epochs,
             hidden_size,
             batch_size,
+            spec
         ),
         "w",
     ) as f:
@@ -311,7 +312,8 @@ def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strateg
               mean_sensi_dev,
               mean_spec_dev,
               mean_sensi,
-              mean_spec
+              mean_spec,
+              spec
               ]
 
     with open(path_save_model + "auto_results.csv", 'a', newline='') as f:

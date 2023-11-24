@@ -75,7 +75,7 @@ class Identity(nn.Module):
 
 
 def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id):
+                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, layer):
 
     configure_seed(seed=42)
     configure_device(gpu_id)
@@ -120,11 +120,20 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
 
     # REPLACE UNWANTED LAYERS TO BE IGNORED WITH IDENTITY FUNCTION
     sig_model.fc = Identity()
-    img_model.linear_3 = Identity()  # applied on the last dense layer only
-
     sig_features = 128
-    img_features = 2048  # 9216, 4096, 2048
-
+    
+    img_model.linear_3 = Identity()  # applied on the last dense layer only
+    img_features = 2048
+    
+    if layer == "linear_2":
+        img_model.linear_2 = Identity()
+        img_features = 4096
+    
+    if layer == "linear_1":
+        img_model.linear_2 = Identity()
+        img_model.linear_1 = Identity()
+        img_features = 9216
+    
     # LOAD DATA
     train_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='train')
     dev_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='dev')
@@ -172,9 +181,9 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     print("Starting joint fusion training at: {}".format(training_date))
 
     saving_dir = os.path.join(path_save_model,
-                              "joint_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}".format(
+                              "joint_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
                                   training_date, learning_rate, optimizer, dropout, epochs,
-                                  hidden_size, batch_size, l2_decay))
+                                  hidden_size, batch_size, l2_decay, layer))
     print("Save models at: {}".format(saving_dir))
 
     for e in epochs_:
@@ -182,7 +191,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         # print(list(img_model.conv2d_1.parameters())[0][0, 0])
         # print(list(sig_model.rnn.parameters())[0][:10])
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(train_dataloader):
-            #print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
+            # print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
             loss = early.fusion_train_batch(
                 X_sig_batch, X_img_batch, y_batch, model, optimizer_, criterion, gpu_id=gpu_id)
             del X_sig_batch
@@ -230,13 +239,13 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     matrix_dev = early.fusion_evaluate(model, dev_dataloader, opt_threshold, gpu_id=gpu_id)
 
     compute_save_metrics(matrix, matrix_dev, opt_threshold, training_date, best_epoch, "joint", path_save_model,
-                         learning_rate, optimizer, dropout, epochs, hidden_size, batch_size, test_id)
+                         learning_rate, optimizer, dropout, epochs, hidden_size, batch_size, test_id, layer)
 
     # plot
     plot_losses(valid_mean_losses, train_mean_losses, ylabel='Loss',
-                name="{}{}training-validation-loss-joint_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}".format(
+                name="{}{}loss-joint_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
                     path_save_model, test_id, training_date, e.item(), learning_rate, optimizer, dropout,
-                    epochs, hidden_size, batch_size, l2_decay))
+                    epochs, hidden_size, batch_size, l2_decay, layer))
 
 
 def main():
