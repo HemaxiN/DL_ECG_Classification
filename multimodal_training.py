@@ -61,8 +61,6 @@ def iterator(tests):
 
 
 if __name__ == "__main__":
-    print("start")
-    print(torch.cuda.is_available())
 
     tests = pd.read_csv("multimodal_tests_revision.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)

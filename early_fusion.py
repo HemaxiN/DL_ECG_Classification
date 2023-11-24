@@ -343,7 +343,7 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     img_model.conv2d_5.register_forward_hook(get_activation(img_hook))
     sig_model.rnn.register_forward_hook(get_activation(sig_hook))
 
-    img_size = {'conv2d_1': 6400, 'conv2d_2': 3200, 'conv2d_3': 1024, 'conv2d_4': 2048, 'conv2d_5': 9216}
+    img_size = {'conv2d_1': 6400, 'conv2d_2': 3200, 'conv2d_3': 1024, 'conv2d_4': 2048, 'conv2d_5': 4096}
     sig_features = 128
     img_features = img_size[img_hook]
 
@@ -404,7 +404,7 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
         # print(list(img_model.conv2d_1.parameters())[0][0, 0])
         # print(list(sig_model.rnn.parameters())[0][:10])
         for i, (X_sig_batch, X_img_batch, y_batch) in enumerate(train_dataloader):
-            #print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
+            # print('batch {} of {}'.format(i + 1, len(train_dataloader)), end='\r')
             loss = fusion_train_batch(
                 X_sig_batch, X_img_batch, y_batch, model, optimizer_, criterion, gpu_id=gpu_id)
             del X_sig_batch

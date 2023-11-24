@@ -10,3 +10,5 @@ job.sh
 __pycache__/
 
 reqs.txt
+
+Dataset/short*/
