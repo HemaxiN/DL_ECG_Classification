@@ -26,7 +26,8 @@ from count_parameters import count_parameters
 
 
 class JointFusionNet(nn.Module):
-    def __init__(self, n_classes, sig_features, img_features, hidden_size, dropout, sig_model, img_model):
+    def __init__(self, n_classes, sig_features, img_features, hidden_size, dropout, sig_model, img_model,
+                 use_attention=False):
         """
         n_classes (int)
         n_features (int)
@@ -36,10 +37,14 @@ class JointFusionNet(nn.Module):
         """
         super(JointFusionNet, self).__init__()
 
+        self.use_attention = use_attention
         self.sig_model = sig_model
         self.img_model = img_model
 
         self.fc_img = nn.Linear(img_features, sig_features * 3)
+
+        if use_attention:
+            self.attention = early.FeatureFusionAttention(sig_features * 4)
 
         self.fc1 = nn.Linear(sig_features * 4, hidden_size * 2)
         self.fc2 = nn.Linear(hidden_size * 2, hidden_size)
@@ -59,6 +64,9 @@ class JointFusionNet(nn.Module):
 
         X = torch.cat((sig_out, x_img), dim=1)
 
+        if self.use_attention:
+            X = self.attention(X)
+
         X = self.dropout(self.relu(self.fc1(X)))
         X = self.dropout(self.relu(self.fc2(X)))
         X = self.out(X)
@@ -75,7 +83,8 @@ class Identity(nn.Module):
 
 
 def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, layer):
+                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, 
+                   layer, use_attention):
 
     configure_seed(seed=42)
     configure_device(gpu_id)
@@ -139,12 +148,16 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     dev_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='dev')
     test_dataset = early.FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='test')
 
+    """train_dataset = early.FusionDataset(signal_data, image_data, [1500, 500, 500], part='train')
+    dev_dataset = early.FusionDataset(signal_data, image_data, [1500, 500, 500], part='dev')
+    test_dataset = early.FusionDataset(signal_data, image_data, [1500, 500, 500], part='test')"""
+
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     model = JointFusionNet(4, sig_features, img_features, hidden_size, dropout,
-                           sig_model, img_model).to(gpu_id)
+                           sig_model, img_model, use_attention).to(gpu_id)
 
     # get an optimizer
     optims = {

@@ -19,6 +19,7 @@ import numpy as np
 
 import alexnetattention as alexnet
 import resnet as resnet
+import early_fusion as early
 
 from datetime import datetime
 import os
@@ -117,7 +118,7 @@ class LateFusionDataset(Dataset):
 
 
 class LateFusionNet(nn.Module):
-    def __init__(self, n_classes, n_features, hidden_size, dropout):
+    def __init__(self, n_classes, n_features, hidden_size, dropout, use_attention=False):
         """
         n_classes (int)
         n_features (int)
@@ -126,6 +127,11 @@ class LateFusionNet(nn.Module):
         dropout (float): dropout probability
         """
         super(LateFusionNet, self).__init__()
+
+        self.use_attention = use_attention
+
+        if use_attention:
+            self.attention = early.FeatureFusionAttention(n_features)
 
         self.hidden = nn.Linear(n_features, hidden_size)
         self.activation = nn.ReLU()
@@ -136,6 +142,10 @@ class LateFusionNet(nn.Module):
         """
         x (batch_size x n_features): a batch of training examples
         """
+
+        if self.use_attention:
+            x = self.attention(x)
+
         x = self.activation(self.hidden(x))
         x = self.dropout(x)
         x = self.out(x)
@@ -184,7 +194,8 @@ def threshold_optimization(model, dataloader, gpu_id=None):
 
 
 def training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                  optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id):
+                  optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id,
+                  use_attention):
 
     configure_seed(seed=42)
     configure_device(gpu_id)
@@ -237,12 +248,19 @@ def training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, 
                                     [17111, 2156, 2163], gpu_id, 1, part='dev')
     test_dataset = LateFusionDataset(signal_data, image_data, sig_model, img_model, sig_type, img_type,
                                      [17111, 2156, 2163], gpu_id, 1, part='test')
+    
+    """train_dataset = LateFusionDataset(signal_data, image_data, sig_model, img_model, sig_type, img_type,
+                                      [1500, 500, 500], gpu_id, batch_size, part='train')
+    dev_dataset = LateFusionDataset(signal_data, image_data, sig_model, img_model, sig_type, img_type,
+                                    [1500, 500, 500], gpu_id, 1, part='dev')
+    test_dataset = LateFusionDataset(signal_data, image_data, sig_model, img_model, sig_type, img_type,
+                                     [1500, 500, 500], gpu_id, 1, part='test')"""
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     dev_dataloader = DataLoader(dev_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-    model = LateFusionNet(4, 8, hidden_size, dropout).to(gpu_id)
+    model = LateFusionNet(4, 8, hidden_size, dropout, use_attention).to(gpu_id)
 
     # get an optimizer
     optims = {

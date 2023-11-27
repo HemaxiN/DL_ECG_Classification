@@ -9,15 +9,16 @@ Code backbone of DSL homeworks was used to structure this script.
 import argparse
 
 import torch
+import torch.nn.functional as F
 from torch import nn
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 
 from utils import configure_device, configure_seed, ECGImageDataset, Dataset_for_RNN, plot_losses, compute_scores, \
     compute_save_metrics, compute_scores_with_norm
 import gru as gru
 import numpy as np
 import statistics
+import math
 
 import alexnetattention as alexnet
 import resnet as resnet
@@ -53,9 +54,38 @@ class FusionDataset(Dataset):
         return sig_X, img_X, sig_y
 
 
+class FeatureFusionAttention(nn.Module):
+    """
+    Computes attention weights at feature-level, since there is no sequence in this case.
+    """
+    def __init__(self, emb_size):
+        super(FeatureFusionAttention, self).__init__()
+        # emb_size is the size of the embedding from each modality after concatenation
+        self.query = nn.Linear(emb_size, emb_size) # Generates queries from the combined embeddings
+        self.key = nn.Linear(emb_size, emb_size)   # Generates keys from the combined embeddings
+        self.value = nn.Linear(emb_size, emb_size) # Generates values from the combined embeddings
+
+    def forward(self, x):
+        # x is the combined embedding with shape [batch_size, 2 * emb_size] 
+        # if you concatenated two embeddings of size emb_size
+        queries = self.query(x) # Shape: [batch_size, emb_size]
+        keys = self.key(x)      # Shape: [batch_size, emb_size]
+        values = self.value(x)  # Shape: [batch_size, emb_size]
+
+        # Scaled dot-product attention
+        attention_scores = torch.matmul(queries, keys.transpose(-2, -1))
+        attention_scores = attention_scores / math.sqrt(queries.size(-1))
+        attention_weights = F.softmax(attention_scores, dim=-1)
+
+        # Apply attention weights to values
+        attended_emb = torch.matmul(attention_weights, values)
+
+        return attended_emb
+    
+
 class EarlyFusionNet(nn.Module):
     def __init__(self, n_classes, sig_features, img_features, hidden_size, dropout, sig_model, img_model,
-                 sig_hook, img_hook):
+                 sig_hook, img_hook, use_attention=False):
         """
         n_classes (int)
         n_features (int)
@@ -69,9 +99,13 @@ class EarlyFusionNet(nn.Module):
         self.img_model = img_model
         self.sig_hook = sig_hook
         self.img_hook = img_hook
+        self.use_attention = use_attention
 
         self.maxpool = nn.MaxPool2d(3, stride=3)
         self.fc_img = nn.Linear(img_features, sig_features)
+
+        if use_attention:
+            self.attention = FeatureFusionAttention(sig_features * 2)
 
         self.fc1 = nn.Linear(sig_features * 2, hidden_size * 2)
         self.fc2 = nn.Linear(hidden_size * 2, hidden_size)
@@ -94,6 +128,10 @@ class EarlyFusionNet(nn.Module):
         x_img = self.dropout(self.relu(self.fc_img(flat_img)))
         X = torch.cat((act_sig, x_img), dim=1)
 
+        # Apply attention block
+        if self.use_attention:
+            X = self.attention(X)
+
         X = self.dropout(self.relu(self.fc1(X)))
         X = self.dropout(self.relu(self.fc2(X)))
         X = self.out(X)
@@ -102,8 +140,6 @@ class EarlyFusionNet(nn.Module):
 
 
 activation = {}
-
-
 def get_activation(name):
     def hook(model, input, output):
         if 'rnn' in name:
@@ -289,7 +325,8 @@ def fusion_threshold_optimization(model, dataloader, gpu_id=None):
 
 
 def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, img_hook):
+                   optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, 
+                   img_hook, use_attention):
 
     configure_seed(seed=42)
     configure_device(gpu_id)
@@ -348,7 +385,7 @@ def training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     img_features = img_size[img_hook]
 
     model = EarlyFusionNet(4, sig_features, img_features, hidden_size, dropout,
-                           sig_model, img_model, sig_hook, img_hook).to(gpu_id)
+                           sig_model, img_model, sig_hook, img_hook, use_attention).to(gpu_id)
     
     # LOAD DATA
     train_dataset = FusionDataset(signal_data, image_data, [17111, 2156, 2163], part='train')

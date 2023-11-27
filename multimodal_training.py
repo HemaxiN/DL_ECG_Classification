@@ -20,19 +20,22 @@ if use_zulip:
 
 
 def central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                    optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info):
+                    optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info,
+                    use_attention):
 
     if strategy == "early":
         training_early(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
+                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info, 
+                       use_attention)
 
     elif strategy == "late":
         training_late(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                      optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id)
+                      optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, use_attention)
 
     elif strategy == "joint":
         training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
+                       optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info,
+                       use_attention)
 
 
 #@fhplog.train_logger
@@ -58,12 +61,13 @@ def iterator(tests):
         spec_info = row["specific"]
 
         central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
-                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info)
+                        optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info,
+                        use_attention_layer)
 
 
 if __name__ == "__main__":
 
-    tests = pd.read_csv("multimodal_tests_revision_2.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("hpc_multimodal_tests_revision_attention.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0
@@ -75,6 +79,8 @@ if __name__ == "__main__":
     path_save_model = 'save_models/paper_results_revision/'
     patience = 10
     early_stop = True
+
+    use_attention_layer = True
 
     iterator(tests)
 
