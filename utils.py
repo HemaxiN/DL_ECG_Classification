@@ -4,6 +4,7 @@
 # import the necessary packages
 import random
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
@@ -319,3 +320,91 @@ def compute_save_metrics(matrix, matrix_dev, opt_threshold, date, epoch, strateg
     with open(path_save_model + "auto_results.csv", 'a', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(fields)
+
+
+def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_test, matrix_val, norm_val, aurocs_val, loss_val):
+
+    # TEST SET
+    matrix_test = np.vstack((matrix_test, norm_test))
+
+    sens = matrix_test[:, 0] / (matrix_test[:, 0] + matrix_test[:, 1])
+    spec = matrix_test[:, 3] / (matrix_test[:, 3] + matrix_test[:, 2])
+    acc = (matrix_test[:, 0] + matrix_test[:, 3]) / np.sum(matrix_test)
+    prec = matrix_test[:, 0] / (matrix_test[:, 0] + matrix_test[:, 2])
+    f1 = (2 * matrix_test[:, 0]) / (2 * matrix_test[:, 0] + matrix_test[:, 2] + matrix_test[:, 1])
+
+    mean_mat = np.mean(matrix_test, axis=0)
+    mean_sens = mean_mat[0] / (mean_mat[0] + mean_mat[1])
+    mean_spec = mean_mat[3] / (mean_mat[3] + mean_mat[2])
+    mean_acc = (mean_mat[0] + mean_mat[3]) / np.sum(mean_mat)
+    mean_prec = mean_mat[0] / (mean_mat[0] + mean_mat[2])
+    mean_f1 = (2 * mean_mat[0]) / (2 * mean_mat[0] + mean_mat[2] + mean_mat[1])
+    mean_auroc = aurocs_test.mean().item()
+    mean_g = np.sqrt(mean_spec * mean_sens)
+    
+    # VALIDATION SET
+    matrix_val = np.vstack((matrix_val, norm_val))
+
+    sens_val = matrix_val[:, 0] / (matrix_val[:, 0] + matrix_val[:, 1])
+    spec_val = matrix_val[:, 3] / (matrix_val[:, 3] + matrix_val[:, 2])
+    acc_val = (matrix_val[:, 0] + matrix_val[:, 3]) / np.sum(matrix_val)
+    prec_val = matrix_val[:, 0] / (matrix_val[:, 0] + matrix_val[:, 2])
+    f1_val = (2 * matrix_val[:, 0]) / (2 * matrix_val[:, 0] + matrix_val[:, 2] + matrix_val[:, 1])
+
+    mean_mat_val = np.mean(matrix_val, axis=0)
+    mean_sens_val = mean_mat_val[0] / (mean_mat_val[0] + mean_mat_val[1])
+    mean_spec_val = mean_mat_val[3] / (mean_mat_val[3] + mean_mat_val[2])
+    mean_acc_val = (mean_mat_val[0] + mean_mat_val[3]) / np.sum(mean_mat_val)
+    mean_prec_val = mean_mat_val[0] / (mean_mat_val[0] + mean_mat_val[2])
+    mean_f1_val = (2 * mean_mat_val[0]) / (2 * mean_mat_val[0] + mean_mat_val[2] + mean_mat_val[1])
+    mean_auroc_val = aurocs_val.mean().item()
+    mean_g_val = np.sqrt(mean_spec_val * mean_sens_val)
+
+    diseases = ["MI_", "STTC_", "CD_", "HYP_", "NORM_"]
+    
+    val_dict = {}
+    test_dict = {}
+    for i in range(5):
+        val_dict.update({
+            diseases[i] + "Sens": sens_val[i],
+            diseases[i] + "Spec": spec_val[i],
+            diseases[i] + "Acc": acc_val[i],
+            diseases[i] + "Prec": prec_val[i],
+            diseases[i] + "F1": f1_val[i],  
+        })
+
+        test_dict.update({
+            diseases[i] + "Sens": sens[i],
+            diseases[i] + "Spec": spec[i],
+            diseases[i] + "Acc": acc[i],
+            diseases[i] + "Prec": prec[i],
+            diseases[i] + "F1": f1[i],  
+        })
+
+        if i != 4:
+            val_dict[diseases[i] + "AUROC"] = aurocs_val[i].item()
+            test_dict[diseases[i] + "AUROC"] = aurocs_test[i].item()
+    
+    val_dict.update({
+        "MEAN_Sens": mean_sens_val, 
+        "MEAN_Spec": mean_spec_val, 
+        "MEAN_Acc": mean_acc_val, 
+        "MEAN_Prec": mean_prec_val, 
+        "MEAN_F1": mean_f1_val, 
+        "MEAN_AUROC": mean_auroc_val, 
+        "MEAN_GMean": mean_g_val,
+        "Loss": loss_val, 
+    })
+        
+    test_dict.update({
+        "MEAN_Sens": mean_sens, 
+        "MEAN_Spec": mean_spec, 
+        "MEAN_Acc": mean_acc, 
+        "MEAN_Prec": mean_prec, 
+        "MEAN_F1": mean_f1, 
+        "MEAN_AUROC": mean_auroc, 
+        "MEAN_GMean": mean_g, 
+        "Loss": loss_test,
+    })
+
+    return val_dict, test_dict

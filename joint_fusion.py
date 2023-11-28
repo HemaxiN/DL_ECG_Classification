@@ -256,7 +256,7 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
 
     # plot
     plot_losses(valid_mean_losses, train_mean_losses, ylabel='Loss',
-                name="{}{}loss-joint_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
+                name="{}{}_loss-joint_{}_ep{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
                     path_save_model, test_id, training_date, e.item(), learning_rate, optimizer, dropout,
                     epochs, hidden_size, batch_size, l2_decay, layer))
 
