@@ -30,19 +30,19 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
         split = file.split("_")
 
         if len(split) == 13:
-            new_data = [file, split[0], split[-2] + "_" + split[-1], split[-9].removeprefix("lr"), split[-5].removeprefix("hs"), split[-4].removeprefix("bs")]
+            new_data = [file, split[0], split[-2] + "_" + split[-1], split[-9][2:], split[-5][2:], split[-4][2:]]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         elif split[0] == "early":
-            new_data = [file, split[0], "conv2d_5", split[-7].removeprefix("lr"), split[-3].removeprefix("hs"), split[-2].removeprefix("bs")]
+            new_data = [file, split[0], "conv2d_5", split[-7][2:], split[-3][2:], split[-2][2:]]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         elif split[0] == "joint":
-            new_data = [file, split[0], "layer_3", split[-7].removeprefix("lr"), split[-3].removeprefix("hs"), split[-2].removeprefix("bs")]
+            new_data = [file, split[0], "layer_3", split[-7][2:], split[-3][2:], split[-2][2:]]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         else:
-            new_data = [file, split[0], "", split[-7].removeprefix("lr"), split[-3].removeprefix("hs"), split[-2].removeprefix("bs")]
+            new_data = [file, split[0], "", split[-7][2:], split[-3][2:], split[-2][2:]]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
     
     df["lr"] = df["lr"].astype(float)
