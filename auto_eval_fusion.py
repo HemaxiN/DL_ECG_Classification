@@ -21,34 +21,39 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
     for file in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, file)):
             if not any(fnmatch.fnmatch(file, f'*.{fmt}') for fmt in excluded_formats):
-                if (use_attention and pd.Timestamp(file.split("_")[2]) >= pd.Timestamp(year=2023, month=11, day=27)) or (not use_attention and pd.Timestamp(file.split("_")[2]) < pd.Timestamp(year=2023, month=11, day=27)):
+                if pd.Timestamp(file.split("_")[2]) < pd.Timestamp(year=2023, month=11, day=27):
                     files.append(file)
 
-    df = pd.DataFrame(columns=["file", "strategy", "specific", "lr", "hs", "bs"])
+    df = pd.DataFrame(columns=["file", "strategy", "specific", "lr", "hs", "bs", "attention"])
     for file in files:
 
         split = file.split("_")
 
         if len(split) == 13:
-            new_data = [file, split[0], split[-2] + "_" + split[-1], split[-9][2:], split[-5][2:], split[-4][2:]]
+            new_data = [file, split[0], split[-2] + "_" + split[-1], split[-9][2:], split[-5][2:], split[-4][2:], "True"]
+            df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
+        
+        elif len(split) == 14:
+            new_data = [file, split[0], split[-3] + "_" + split[-2], split[-10][2:], split[-6][2:], split[-5][2:], split[-1]]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         elif split[0] == "early":
-            new_data = [file, split[0], "conv2d_5", split[-7][2:], split[-3][2:], split[-2][2:]]
+            new_data = [file, split[0], "conv2d_5", split[-7][2:], split[-3][2:], split[-2][2:], "True"]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         elif split[0] == "joint":
-            new_data = [file, split[0], "layer_3", split[-7][2:], split[-3][2:], split[-2][2:]]
+            new_data = [file, split[0], "layer_3", split[-7][2:], split[-3][2:], split[-2][2:], "True"]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         else:
-            new_data = [file, split[0], "", split[-7][2:], split[-3][2:], split[-2][2:]]
+            new_data = [file, split[0], "", split[-7][2:], split[-3][2:], split[-2][2:], "True"]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
     
     df["lr"] = df["lr"].astype(float)
     df["bs"] = df["bs"].astype(int)
     df["hs"] = df["hs"].astype(int)
-    
+    df["attention"] = df["attention"].astype(bool)
+
     return df
 
 
@@ -68,7 +73,7 @@ def run_tests(test):
         test_dataset = late.LateFusionDataset(signal_data, image_data, sig_model, img_model, 'gru', 'alexnet',
                                              dataset_size, gpu_id, 1, part='test')
 
-        model = late.LateFusionNet(4, 8, test["hs"], 0, use_attention).to(gpu_id)
+        model = late.LateFusionNet(4, 8, test["hs"], 0, test["attention"]).to(gpu_id)
     
     elif test["strategy"] == "early":
         sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
@@ -88,7 +93,7 @@ def run_tests(test):
         img_features = img_size[test["specific"]]
 
         model = early.EarlyFusionNet(4, 128, img_features, test["hs"], 0,
-                                     sig_model, img_model, "rnn", test["specific"], use_attention).to(gpu_id)
+                                     sig_model, img_model, "rnn", test["specific"], test["attention"]).to(gpu_id)
     
     else:
         sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
@@ -112,7 +117,7 @@ def run_tests(test):
         val_dataset = early.FusionDataset(signal_data, image_data, dataset_size, part='dev')
         test_dataset = early.FusionDataset(signal_data, image_data, dataset_size, part='test')
 
-        model = joint.JointFusionNet(4, sig_features, img_features, test["hs"], 0, sig_model, img_model, use_attention).to(gpu_id)
+        model = joint.JointFusionNet(4, sig_features, img_features, test["hs"], 0, sig_model, img_model, test["attention"]).to(gpu_id)
 
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
@@ -164,7 +169,6 @@ if __name__ == "__main__":
     dir_models = "save_models/paper_results_revision"
 
     gpu_id = 0 if torch.cuda.is_available() else "cpu"
-    use_attention = False
 
     tests_df = list_all_models(dir_models)
 

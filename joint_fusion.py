@@ -194,9 +194,9 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     print("Starting joint fusion training at: {}".format(training_date))
 
     saving_dir = os.path.join(path_save_model,
-                              "joint_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}".format(
+                              "joint_model_{}_lr{}_opt{}_dr{}_eps{}_hs{}_bs{}_l2{}_{}_{}".format(
                                   training_date, learning_rate, optimizer, dropout, epochs,
-                                  hidden_size, batch_size, l2_decay, layer))
+                                  hidden_size, batch_size, l2_decay, layer, use_attention))
     print("Save models at: {}".format(saving_dir))
 
     for e in epochs_:
