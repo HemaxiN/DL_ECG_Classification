@@ -134,11 +134,11 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     img_model.linear_3 = Identity()  # applied on the last dense layer only
     img_features = 2048
     
-    if layer == "linear_2":
+    if layer == "layer_2":
         img_model.linear_2 = Identity()
         img_features = 4096
     
-    if layer == "linear_1":
+    if layer == "layer_1":
         img_model.linear_2 = Identity()
         img_model.linear_1 = Identity()
         img_features = 9216

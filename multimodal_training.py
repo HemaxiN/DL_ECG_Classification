@@ -59,6 +59,7 @@ def iterator(tests):
         l2_decay = row["l2_decay"]
         test_id = row["test_id"]
         spec_info = row["specific"]
+        use_attention_layer = True if row["attention"] == "yes" else False
 
         central_station(strategy, gpu_id, sig_type, img_type, signal_data, image_data, dropout, batch_size, hidden_size,
                         optimizer, learning_rate, l2_decay, epochs, path_save_model, patience, early_stop, test_id, spec_info,
@@ -67,7 +68,7 @@ def iterator(tests):
 
 if __name__ == "__main__":
 
-    tests = pd.read_csv("hpc_multimodal_tests_revision_attention.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("hpc_multimodal_tests_revision_joint.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0
@@ -79,8 +80,6 @@ if __name__ == "__main__":
     path_save_model = 'save_models/paper_results_revision/'
     patience = 10
     early_stop = True
-
-    use_attention_layer = True
 
     iterator(tests)
 

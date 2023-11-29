@@ -362,8 +362,8 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
 
     diseases = ["MI_", "STTC_", "CD_", "HYP_", "NORM_"]
     
-    val_dict = {}
-    test_dict = {}
+    val_dict = {"Loss": loss_val}
+    test_dict = {"Loss": loss_test}
     for i in range(5):
         val_dict.update({
             diseases[i] + "Sens": sens_val[i],
@@ -393,7 +393,6 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
         "MEAN_F1": mean_f1_val, 
         "MEAN_AUROC": mean_auroc_val, 
         "MEAN_GMean": mean_g_val,
-        "Loss": loss_val, 
     })
         
     test_dict.update({
@@ -404,7 +403,6 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
         "MEAN_F1": mean_f1, 
         "MEAN_AUROC": mean_auroc, 
         "MEAN_GMean": mean_g, 
-        "Loss": loss_test,
     })
 
     return val_dict, test_dict
