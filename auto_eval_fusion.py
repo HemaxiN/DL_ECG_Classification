@@ -21,7 +21,7 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
     for file in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, file)):
             if not any(fnmatch.fnmatch(file, f'*.{fmt}') for fmt in excluded_formats):
-                if pd.Timestamp(file.split("_")[2]) < pd.Timestamp(year=2023, month=11, day=27):
+                if pd.Timestamp(file.split("_")[2]) >= pd.Timestamp(year=2023, month=11, day=27):
                     files.append(file)
 
     df = pd.DataFrame(columns=["file", "strategy", "specific", "lr", "hs", "bs", "attention"])
@@ -30,6 +30,11 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
         split = file.split("_")
 
         if len(split) == 13:
+
+            # needs to skip wrong joint model tests
+            if split[0] == "joint" and split[-1] != "3":
+                print("SKIP:", file)
+                continue
             new_data = [file, split[0], split[-2] + "_" + split[-1], split[-9][2:], split[-5][2:], split[-4][2:], "True"]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
@@ -52,7 +57,7 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
     df["lr"] = df["lr"].astype(float)
     df["bs"] = df["bs"].astype(int)
     df["hs"] = df["hs"].astype(int)
-    df["attention"] = df["attention"].astype(bool)
+    df["attention"] = df["attention"].map({"True": True, "False": False})
 
     return df
 
@@ -105,11 +110,11 @@ def run_tests(test):
         img_model.linear_3 = joint.Identity()  # applied on the last dense layer only
         img_features = 2048
         
-        if test["specific"] == "linear_2":
+        if test["specific"] == "layer_2":
             img_model.linear_2 = joint.Identity()
             img_features = 4096
         
-        if test["specific"] == "linear_1":
+        if test["specific"] == "layer_1":
             img_model.linear_2 = joint.Identity()
             img_model.linear_1 = joint.Identity()
             img_features = 9216
@@ -179,7 +184,8 @@ if __name__ == "__main__":
     test_df = pd.DataFrame()
     params_df = pd.DataFrame()
     for i, test in tests_df.iterrows():
-        print(test["file"])
+        print("\n\n")
+        print(test.to_dict())
 
         val_dict, test_dict, params = run_tests(test)
 
@@ -187,7 +193,7 @@ if __name__ == "__main__":
         test_df = pd.concat([test_df, pd.DataFrame([test_dict], index=[test['file']])], ignore_index=False)
         params_df = pd.concat([params_df, pd.DataFrame([{"Parameters": params}], index=[test['file']])], ignore_index=False)
 
-    with pd.ExcelWriter(dir_models + os.sep + "final_results.xlsx", engine='openpyxl') as writer:
+    with pd.ExcelWriter(dir_models + os.sep + "final_results_joint_attention.xlsx", engine='openpyxl') as writer:
         val_df.to_excel(writer, sheet_name='Validation')
         test_df.to_excel(writer, sheet_name='Test')
         params_df.to_excel(writer, sheet_name='Parameters')
