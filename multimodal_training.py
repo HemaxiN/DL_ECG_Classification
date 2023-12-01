@@ -68,7 +68,7 @@ def iterator(tests):
 
 if __name__ == "__main__":
 
-    tests = pd.read_csv("hpc_multimodal_tests_revision_joint.csv", delimiter=";", decimal=",")
+    tests = pd.read_csv("hpc_multimodal_full.csv", delimiter=";", decimal=",")
     tests = tests.sample(frac=1).reset_index(drop=True)
 
     gpu_id = 0

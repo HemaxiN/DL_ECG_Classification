@@ -124,8 +124,8 @@ def training_joint(gpu_id, sig_type, img_type, signal_data, image_data, dropout,
     else:
         raise ValueError('2D model is not defined.')
 
-    sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
-    img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
+    # sig_model.load_state_dict(torch.load(sig_path, map_location=torch.device(gpu_id)))
+    # img_model.load_state_dict(torch.load(img_path, map_location=torch.device(gpu_id)))
 
     # REPLACE UNWANTED LAYERS TO BE IGNORED WITH IDENTITY FUNCTION
     sig_model.fc = Identity()
