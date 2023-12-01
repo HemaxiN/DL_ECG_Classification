@@ -329,7 +329,7 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
 
     sens = matrix_test[:, 0] / (matrix_test[:, 0] + matrix_test[:, 1])
     spec = matrix_test[:, 3] / (matrix_test[:, 3] + matrix_test[:, 2])
-    acc = (matrix_test[:, 0] + matrix_test[:, 3]) / np.sum(matrix_test)
+    acc = (matrix_test[:, 0] + matrix_test[:, 3]) / np.sum(matrix_test, axis=1)
     prec = matrix_test[:, 0] / (matrix_test[:, 0] + matrix_test[:, 2])
     f1 = (2 * matrix_test[:, 0]) / (2 * matrix_test[:, 0] + matrix_test[:, 2] + matrix_test[:, 1])
 
@@ -347,7 +347,7 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
 
     sens_val = matrix_val[:, 0] / (matrix_val[:, 0] + matrix_val[:, 1])
     spec_val = matrix_val[:, 3] / (matrix_val[:, 3] + matrix_val[:, 2])
-    acc_val = (matrix_val[:, 0] + matrix_val[:, 3]) / np.sum(matrix_val)
+    acc_val = (matrix_val[:, 0] + matrix_val[:, 3]) / np.sum(matrix_val, axis=1)
     prec_val = matrix_val[:, 0] / (matrix_val[:, 0] + matrix_val[:, 2])
     f1_val = (2 * matrix_val[:, 0]) / (2 * matrix_val[:, 0] + matrix_val[:, 2] + matrix_val[:, 1])
 

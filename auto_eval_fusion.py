@@ -21,8 +21,10 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
     for file in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, file)):
             if not any(fnmatch.fnmatch(file, f'*.{fmt}') for fmt in excluded_formats):
-                if pd.Timestamp(file.split("_")[2]) >= pd.Timestamp(year=2023, month=11, day=27):
-                    files.append(file)
+                #if pd.Timestamp(file.split("_")[2]) >= pd.Timestamp(year=2023, month=12, day=1):
+                files.append(file)
+    
+    files = ["late_model_2023-11-24_17-45-47_lr0.001_optadam_dr0_eps200_hs128_bs256_l20"]
 
     df = pd.DataFrame(columns=["file", "strategy", "specific", "lr", "hs", "bs", "attention"])
     for file in files:
@@ -51,7 +53,7 @@ def list_all_models(directory, excluded_formats=["txt", "pdf", "csv", "xlsx"]):
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
         
         else:
-            new_data = [file, split[0], "", split[-7][2:], split[-3][2:], split[-2][2:], "True"]
+            new_data = [file, split[0], "", split[-7][2:], split[-3][2:], split[-2][2:], "False"]
             df = pd.concat([df, pd.DataFrame([new_data], columns=df.columns)], ignore_index=True)
     
     df["lr"] = df["lr"].astype(float)
@@ -193,7 +195,7 @@ if __name__ == "__main__":
         test_df = pd.concat([test_df, pd.DataFrame([test_dict], index=[test['file']])], ignore_index=False)
         params_df = pd.concat([params_df, pd.DataFrame([{"Parameters": params}], index=[test['file']])], ignore_index=False)
 
-    with pd.ExcelWriter(dir_models + os.sep + "final_results_joint_attention.xlsx", engine='openpyxl') as writer:
+    with pd.ExcelWriter(dir_models + os.sep + "final_results_t.xlsx", engine='openpyxl') as writer:
         val_df.to_excel(writer, sheet_name='Validation')
         test_df.to_excel(writer, sheet_name='Test')
         params_df.to_excel(writer, sheet_name='Parameters')
