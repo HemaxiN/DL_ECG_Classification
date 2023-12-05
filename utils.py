@@ -327,6 +327,8 @@ def compute_save_metrics_with_norm(matrix_test, norm_test, aurocs_test, loss_tes
     # TEST SET
     matrix_test = np.vstack((matrix_test, norm_test))
 
+    print(matrix_test)
+
     sens = matrix_test[:, 0] / (matrix_test[:, 0] + matrix_test[:, 1])
     spec = matrix_test[:, 3] / (matrix_test[:, 3] + matrix_test[:, 2])
     acc = (matrix_test[:, 0] + matrix_test[:, 3]) / np.sum(matrix_test, axis=1)
