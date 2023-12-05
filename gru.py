@@ -119,7 +119,6 @@ def evaluate(model, dataloader, thr, gpu_id=None):
     with torch.no_grad():
         matrix = np.zeros((4, 4))
         for i, (x_batch, y_batch) in enumerate(dataloader):
-            print('eval {} of {}'.format(i + 1, len(dataloader)), end='\r')
             x_batch, y_batch = x_batch.to(gpu_id), y_batch.to(gpu_id)
             y_pred = predict(model, x_batch, thr)
             y_true = np.array(y_batch.cpu())
