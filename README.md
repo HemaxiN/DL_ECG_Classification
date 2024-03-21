@@ -1,5 +1,7 @@
 # DL_ECG_Classification
 
+Official implementation of the paper: https://www.sciencedirect.com/science/article/pii/S174680942400199X
+
 Practical project to compare how different methods for ECG signal representation perform in ECG classification; and to explore a multimodal DL approach to fuse the two models, leveraging the different structures of signal representations.
 
 
