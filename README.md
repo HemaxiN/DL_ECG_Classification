@@ -47,11 +47,11 @@ python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 256 -path_sa
 
 Please note that the optimized configurations for each architecture are based on the findings presented in our [paper](https://www.sciencedirect.com/science/article/pii/S174680942400199X). We recommend using the parameters specified below and referring to the paper for further details:
 
-(a) AlexNet: #filters=16, a batch size of 256 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0;
-(b) ResNet: #filters=16, batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.01; 
-(c) VGGNet: #filters of 16, a batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0.3; 
-(d) MobileNetV2: #filters of 32, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0; 
-(e) AlexNetAtt: #filters of 8, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0.
+* (a) AlexNet: #filters=16, a batch size of 256 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0;
+* (b) ResNet: #filters=16, batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.01; 
+* (c) VGGNet: #filters of 16, a batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0.3; 
+* (d) MobileNetV2: #filters of 32, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0; 
+* (e) AlexNetAtt: #filters of 8, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0.
 
 
 
