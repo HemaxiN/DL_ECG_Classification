@@ -38,11 +38,22 @@ train_dev_test_dataset
     └── labels
 ```
 
-To train the model use the following command (selecting the model ```AlexNet.py```, ```resnet.py```, ```vggnet.py``` or ```cnn.py```, and correctly specifying the directory of the dataset (using ```-data```) and the directory to save the model (using ```-path_save_model```). Other parameters can be specified as explained [here](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/AlexNet.py#L145-L157).
+To train the model use the following command (selecting the model ```AlexNet.py```, ```resnet.py```, ```vggnet.py``` or ```alexnetattention.py```, and correctly specifying the directory of the dataset (using ```-data```) and the directory to save the model (using ```-path_save_model```). Other parameters can be specified as explained [here](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/AlexNet.py#L145-L157).
+For instance:
 
 ```
-python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 64 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.1  
+python3 AlexNet.py -data '/dev/shm/dataset' -epochs 100 -batch_size 256 -path_save_model '/mnt/2TBData/hemaxi/ProjetoDL/working' -gpu_id 0 -learning_rate 0.01  
 ```
+
+Please note that the optimized configurations for each architecture are based on the findings presented in our [paper](https://www.sciencedirect.com/science/article/pii/S174680942400199X). We recommend using the parameters specified below and referring to the paper for further details:
+
+(a) AlexNet: #filters=16, a batch size of 256 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0;
+(b) ResNet: #filters=16, batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.01; 
+(c) VGGNet: #filters of 16, a batch size of 128 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0.3; 
+(d) MobileNetV2: #filters of 32, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.1 and a dropout rate of 0; 
+(e) AlexNetAtt: #filters of 8, a batch size of 16 (adjust as needed based on GPU memory), a learning rate of 0.01 and a dropout rate of 0.
+
+
 
 ![](https://github.com/HemaxiN/DL_ECG_Classification/blob/main/Images/cnn_conf2.png)
 
